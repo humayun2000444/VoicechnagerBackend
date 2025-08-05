@@ -1,220 +1,360 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Voice Changer Control</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    max-width: 700px;
-    margin: 20px auto;
-    padding: 10px;
-    background: #f4f6f8;
-  }
-  h1 {
-    text-align: center;
-    color: #333;
-  }
-  .uuid-list {
-    margin-bottom: 15px;
-  }
-  .uuid-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-  .uuid-row input[type="text"] {
-    flex-grow: 1;
-    padding: 6px 8px;
-    font-size: 1em;
-  }
-  .uuid-row button {
-    padding: 6px 12px;
-    font-size: 0.9em;
-    cursor: pointer;
-  }
-  .actions {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-  select {
-    padding: 6px 10px;
-    font-size: 1em;
-  }
-  #response {
-    background: #fff;
-    border: 1px solid #ccc;
-    padding: 10px;
-    max-height: 250px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    font-family: monospace;
-    font-size: 0.9em;
-    margin-top: 10px;
-  }
-  button.primary {
-    background-color: #1976d2;
-    border: none;
-    color: white;
-    border-radius: 3px;
-  }
-  button.primary:hover {
-    background-color: #115293;
-  }
-  button.danger {
-    background-color: #d32f2f;
-    border: none;
-    color: white;
-    border-radius: 3px;
-  }
-  button.danger:hover {
-    background-color: #8b1a1a;
-  }
-  button.secondary {
-    background-color: #555;
-    border: none;
-    color: white;
-    border-radius: 3px;
-  }
-  button.secondary:hover {
-    background-color: #333;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Changer Control</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <style>
+    .call-card {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .call-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .active-call {
+      border-left: 4px solid #0d6efd;
+    }
+    #responseLog {
+      font-family: monospace;
+      height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
+    .status-active {
+      background-color: #28a745;
+    }
+    .status-inactive {
+      background-color: #dc3545;
+    }
+    .status-pending {
+      background-color: #ffc107;
+    }
+  </style>
 </head>
 <body>
+<div class="container py-4">
+  <h1 class="mb-4 text-center">Voice Changer Control</h1>
 
-<h1>Voice Changer Control</h1>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Active Calls</h5>
+          <button id="refreshCalls" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+        <div class="card-body">
+          <div id="callsList" class="list-group"></div>
+        </div>
+      </div>
+    </div>
 
-<button class="secondary" onclick="fetchActiveCalls()" style="margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto;">
-  Load Active Calls UUIDs
-</button>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Controls</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">Selected Call</label>
+            <div class="input-group">
+              <input id="selectedCall" type="text" class="form-control" readonly>
+              <span id="callStatus" class="input-group-text">
+                <span class="status-indicator status-inactive"></span>
+                <span>No call selected</span>
+              </span>
+            </div>
+          </div>
 
-<div class="uuid-list" id="uuidList">
-  <div class="uuid-row">
-    <input type="text" placeholder="Enter Call UUID" />
-    <button onclick="removeUuid(this)" title="Remove this UUID">✖</button>
+          <div class="d-flex gap-2 mb-3">
+            <button id="startBtn" class="btn btn-primary flex-grow-1" disabled>
+              <i class="bi bi-play-fill"></i> Start Voice Changer
+            </button>
+            <button id="stopBtn" class="btn btn-danger flex-grow-1" disabled>
+              <i class="bi bi-stop-fill"></i> Stop
+            </button>
+          </div>
+
+          <div class="d-flex gap-2 mb-3">
+            <button id="terminateBtn" class="btn btn-warning flex-grow-1" disabled>
+              <i class="bi bi-telephone-x-fill"></i> End Call
+            </button>
+            <button id="checkStatusBtn" class="btn btn-secondary flex-grow-1">
+              <i class="bi bi-arrow-repeat"></i> Check Status
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">Response Log</h6>
+              <button id="clearLog" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-trash"></i> Clear
+              </button>
+            </div>
+            <div id="responseLog" class="card-body"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
-<button onclick="addUuid()" style="margin-bottom: 20px;">+ Add another UUID</button>
 
-<div class="actions">
-  <button class="primary" onclick="controlVoiceChanger('start')">Start</button>
-
-  <label for="pitchSelect" style="align-self: center;">Pitch:</label>
-  <select id="pitchSelect">
-    <option value="0.7">Very Low (0.7)</option>
-    <option value="0.8">Low (0.8)</option>
-    <option value="1.0" selected>Normal (1.0)</option>
-    <option value="1.1">High (1.1)</option>
-    <option value="1.2">Higher (1.2)</option>
-    <option value="1.3">Very High (1.3)</option>
-  </select>
-  <button class="primary" onclick="controlVoiceChanger('set')">Set Pitch</button>
-
-  <button class="danger" onclick="controlVoiceChanger('stop')">Stop</button>
-</div>
-
-<pre id="response" aria-live="polite" aria-atomic="true"></pre>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  const apiBase = 'http://localhost:8080/api/voicechanger';
+  let selectedCall = null;
+  let activeVoiceChanger = false;
+  let statusCheckInterval = null;
 
-  function addUuid() {
-    const container = document.getElementById('uuidList');
-    const div = document.createElement('div');
-    div.className = 'uuid-row';
-    div.innerHTML = `
-      <input type="text" placeholder="Enter Call UUID" />
-      <button onclick="removeUuid(this)" title="Remove this UUID">✖</button>
-    `;
-    container.appendChild(div);
+  document.addEventListener('DOMContentLoaded', () => {
+    loadActiveCalls();
+    document.getElementById('refreshCalls').addEventListener('click', loadActiveCalls);
+    document.getElementById('startBtn').addEventListener('click', () => sendCommand('start'));
+    document.getElementById('stopBtn').addEventListener('click', () => sendCommand('stop'));
+    document.getElementById('terminateBtn').addEventListener('click', terminateCall);
+    document.getElementById('checkStatusBtn').addEventListener('click', () => {
+      if (selectedCall) checkVoiceChangerStatus(selectedCall, true);
+    });
+    document.getElementById('clearLog').addEventListener('click', () => {
+      document.getElementById('responseLog').innerHTML = '';
+    });
+  });
+
+  function loadActiveCalls() {
+    logResponse('Loading active calls...');
+    fetch('http://localhost:8080/api/voicechanger/calls')
+            .then(response => {
+              if (!response.ok) throw new Error('Network response was not ok');
+              return response.json();
+            })
+            .then(calls => {
+              const callsList = document.getElementById('callsList');
+              callsList.innerHTML = '';
+
+              if (calls.length === 0) {
+                callsList.innerHTML = '<div class="list-group-item text-muted">No active calls found</div>';
+                logResponse('No active calls found');
+                return;
+              }
+
+              logResponse(`Found ${calls.length} active calls`);
+              calls.forEach(call => {
+                const callElement = document.createElement('button');
+                callElement.className = 'list-group-item list-group-item-action call-card';
+                callElement.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <strong>${call.caller || 'Unknown'}</strong> →
+                <strong>${call.callee || 'Unknown'}</strong>
+              </div>
+              <div>
+                <span class="badge bg-secondary">${call.uuid.substring(0, 8)}...</span>
+              </div>
+            </div>
+          `;
+
+                callElement.addEventListener('click', () => {
+                  selectCall(call.uuid);
+                });
+
+                callsList.appendChild(callElement);
+              });
+            })
+            .catch(error => {
+              logResponse('Error loading calls: ' + error.message);
+            });
   }
 
-  function removeUuid(button) {
-    const row = button.parentElement;
-    const container = document.getElementById('uuidList');
-    if (container.children.length > 1) {
-      container.removeChild(row);
+  function selectCall(uuid) {
+    selectedCall = uuid;
+    document.getElementById('selectedCall').value = uuid;
+    document.querySelectorAll('.call-card').forEach(el => {
+      el.classList.remove('active-call');
+    });
+
+    // Highlight the selected call
+    Array.from(document.querySelectorAll('.call-card')).find(el =>
+            el.textContent.includes(uuid.substring(0, 8))
+    )?.classList.add('active-call');
+
+    // Enable start and terminate buttons
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('terminateBtn').disabled = false;
+
+    // Check status immediately
+    checkVoiceChangerStatus(uuid, true);
+
+    // Set up periodic status checking
+    if (statusCheckInterval) {
+      clearInterval(statusCheckInterval);
+    }
+    statusCheckInterval = setInterval(() => {
+      checkVoiceChangerStatus(uuid, false);
+    }, 5000); // Check every 5 seconds
+  }
+
+  function checkVoiceChangerStatus(uuid, userInitiated) {
+    if (userInitiated) {
+      logResponse(`Checking status for call ${uuid.substring(0, 8)}...`);
+    }
+
+    fetch(`http://localhost:8080/api/voicechanger/status?uuid=${uuid}`)
+            .then(response => {
+              if (!response.ok) throw new Error('Network response was not ok');
+              return response.json();
+            })
+            .then(data => {
+              if (userInitiated) {
+                logResponse(`Status check result: ${data.message}`);
+              }
+              updateActiveStatus(data.active);
+            })
+            .catch(error => {
+              if (userInitiated) {
+                logResponse('Error checking status: ' + error.message);
+              }
+              updateActiveStatus(false);
+            });
+  }
+
+  function updateActiveStatus(isActive) {
+    activeVoiceChanger = isActive;
+    const statusIndicator = document.querySelector('#callStatus .status-indicator');
+    const statusText = document.querySelector('#callStatus span:last-child');
+
+    // Clear all status classes
+    statusIndicator.classList.remove('status-active', 'status-inactive', 'status-pending');
+
+    if (isActive) {
+      statusIndicator.classList.add('status-active');
+      statusText.textContent = 'Active';
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = false;
     } else {
-      alert('At least one UUID is required.');
+      statusIndicator.classList.add('status-inactive');
+      statusText.textContent = 'Inactive';
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
     }
+
+    // Enable terminate button whenever a call is selected
+    document.getElementById('terminateBtn').disabled = !selectedCall;
   }
 
-  async function fetchActiveCalls() {
-    try {
-      const res = await fetch(`${apiBase}/calls`);
-      if (!res.ok) throw new Error(await res.text());
-      const uuids = await res.json();
-
-      const container = document.getElementById('uuidList');
-      container.innerHTML = '';
-      uuids.forEach(uuid => {
-        const div = document.createElement('div');
-        div.className = 'uuid-row';
-        div.innerHTML = `
-          <input type="text" value="${uuid}" />
-          <button onclick="removeUuid(this)" title="Remove this UUID">✖</button>
-        `;
-        container.appendChild(div);
-      });
-      showResponse(`Loaded ${uuids.length} active UUID(s).`);
-    } catch (err) {
-      alert('Error fetching active calls: ' + err.message);
-    }
-  }
-
-  async function controlVoiceChanger(command) {
-    const uuids = Array.from(document.querySelectorAll('#uuidList input[type=text]'))
-                       .map(input => input.value.trim())
-                       .filter(Boolean);
-
-    if (uuids.length === 0) {
-      alert('Please enter at least one UUID.');
+  function sendCommand(command) {
+    if (!selectedCall) {
+      logResponse('Please select a call first');
       return;
     }
 
-    let value = null;
-    if (command === 'set') {
-      value = document.getElementById('pitchSelect').value;
-      if (!value) {
-        alert('Please select a pitch value.');
-        return;
-      }
-    }
+    // Show pending state
+    const statusIndicator = document.querySelector('#callStatus .status-indicator');
+    statusIndicator.classList.remove('status-active', 'status-inactive');
+    statusIndicator.classList.add('status-pending');
 
-    const responses = [];
-    showResponse('Sending commands...\n');
+    const statusText = document.querySelector('#callStatus span:last-child');
+    statusText.textContent = command === 'start' ? 'Starting...' : 'Stopping...';
 
-    for (const uuid of uuids) {
-      let url = `${apiBase}?command=${command}&uuid=${encodeURIComponent(uuid)}`;
-      if (value !== null) {
-        url += `&value=${encodeURIComponent(value)}`;
-      }
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('stopBtn').disabled = true;
+    document.getElementById('terminateBtn').disabled = true;
 
-      try {
-        const res = await fetch(url);
-        const text = await res.text();
-        if (!res.ok) {
-          responses.push(`UUID: ${uuid} — Error ${res.status}: ${text}`);
-        } else {
-          responses.push(`UUID: ${uuid} — Success:\n${text.trim()}`);
-        }
-      } catch (err) {
-        responses.push(`UUID: ${uuid} — Fetch error: ${err.message}`);
-      }
+    const payload = {
+      command: command,
+      uuid: selectedCall
+    };
 
-      showResponse(responses.join('\n\n'));
-    }
+    logResponse(`Sending ${command} command to call ${selectedCall.substring(0, 8)}...`);
+
+    fetch('http://localhost:8080/api/voicechanger', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+              return response.text();
+            })
+            .then(text => {
+              logResponse(`Command response: ${text}`);
+              // Check status after a short delay to allow changes to take effect
+              setTimeout(() => {
+                checkVoiceChangerStatus(selectedCall, true);
+              }, 1000);
+            })
+            .catch(error => {
+              logResponse('Error: ' + error.message);
+              // Still check status even if error occurred
+              setTimeout(() => {
+                checkVoiceChangerStatus(selectedCall, true);
+              }, 1000);
+            });
   }
 
-  function showResponse(text) {
-    document.getElementById('response').textContent = text;
+  function terminateCall() {
+    if (!selectedCall) {
+      logResponse('Please select a call first');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to terminate this call?')) {
+      return;
+    }
+
+    logResponse(`Attempting to terminate call ${selectedCall.substring(0, 8)}...`);
+
+    // Disable button during operation
+    document.getElementById('terminateBtn').disabled = true;
+
+    fetch('http://localhost:8080/api/voicechanger/terminate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ uuid: selectedCall })
+    })
+            .then(response => {
+              if (!response.ok) throw new Error('Network response was not ok');
+              return response.text();
+            })
+            .then(text => {
+              logResponse(`Termination result: ${text}`);
+              // Refresh calls list after termination
+              setTimeout(loadActiveCalls, 1000);
+            })
+            .catch(error => {
+              logResponse('Error terminating call: ' + error.message);
+            })
+            .finally(() => {
+              document.getElementById('terminateBtn').disabled = false;
+            });
+  }
+
+  function logResponse(message) {
+    const log = document.getElementById('responseLog');
+    const entry = document.createElement('div');
+    entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
   }
 </script>
-
 </body>
 </html>
