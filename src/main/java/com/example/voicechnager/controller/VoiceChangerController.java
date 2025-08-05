@@ -58,13 +58,13 @@ public class VoiceChangerController {
             return "Error: Only outbound calls can be terminated from this interface";
         }
 
-        String fsCommand = "uuid_kill " + request.uuid();
+        String fsCommand = "uuid_kill " + request.uuid() + " NORMAL_CLEARING";
         String result = executeFsCli(fsCommand);
 
         if (result.contains("-ERR")) {
             return "Error: " + result;
         }
-        return result;
+        return "Call terminated successfully";
     }
 
     @GetMapping("/status")
@@ -80,7 +80,7 @@ public class VoiceChangerController {
         return Map.of(
                 "active", active,
                 "status", active ? "Active" : "Inactive",
-                "message", active ? "Voice changer is active" : statusOutput
+                "message", active ? "Voice magic is currently active" : "Voice magic is not active"
         );
     }
 
