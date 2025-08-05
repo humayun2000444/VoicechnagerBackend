@@ -195,7 +195,7 @@
 
   function loadActiveCalls() {
     logResponse('Loading active calls...');
-    fetch('http://98.70.40.108:8080/api/voicechanger/calls')
+    fetch('http://98.70.40.108/api/voicechanger/calls')
             .then(response => {
               if (!response.ok) throw new Error('Network response was not ok');
               return response.json();
@@ -255,7 +255,7 @@
   function checkVoiceChangerStatus(uuid, userInitiated) {
     if (userInitiated) logResponse(`Checking status for call ${uuid.substring(0, 8)}...`);
 
-    fetch(`http://98.70.40.108:8080/api/voicechanger/status?uuid=${uuid}`)
+    fetch(`http://98.70.40.108/api/voicechanger/status?uuid=${uuid}`)
             .then(response => {
               if (!response.ok) throw new Error('Network response was not ok');
               return response.json();
@@ -312,7 +312,7 @@
     const payload = { command, uuid: selectedCall };
     logResponse(`Sending ${command} command to ${selectedCall.substring(0, 8)}...`);
 
-    fetch('http://98.70.40.108:8080/api/voicechanger', {
+    fetch('http://98.70.40.108/api/voicechanger', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -342,7 +342,7 @@
     logResponse(`Terminating call ${selectedCall.substring(0, 8)}...`);
     document.getElementById('terminateBtn').disabled = true;
 
-    fetch('http://98.70.40.108/:8080/api/voicechanger/terminate', {
+    fetch('http://98.70.40.108/api/voicechanger/terminate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uuid: selectedCall })

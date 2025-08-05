@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api/voicechanger")
+@RequestMapping("/voicechanger")
 public class VoiceChangerController {
 
     private static final Pattern UUID_PATTERN = Pattern.compile(
