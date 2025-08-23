@@ -1,374 +1,668 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- ====== Meta & Title ====== -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🎛 Voice Changer Control</title>
-
-  <!-- ====== External Styles ====== -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"/>
-
-  <!-- ====== Custom Styles ====== -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   <style>
-    /* ===== Global Layout ===== */
+    :root {
+      --primary: #6c63ff; --secondary: #4fc3f7; --success: #4caf50;
+      --danger: #f44336; --warning: #ff9800; --info: #00bcd4;
+      --light: #f8f9fa; --dark: #212529; --card-bg: #ffffff;
+      --body-bg: #f0f4f8; --text-primary: #333333; --text-secondary: #6c757d;
+    }
+    * { box-sizing: border-box; }
     body {
-      background: #f0f4f8;
-      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, var(--body-bg) 0%, #e6f7ff 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text-primary); height: 100vh; overflow: hidden;
+      margin: 0; padding: 0.5rem;
     }
-
-    .container {
-      max-width: 1200px;
+    .app-container {
+      display: flex; flex-direction: column; height: 100%; max-width: 100%;
     }
-
-    h1 {
-      font-weight: 700;
+    .app-header {
+      background: linear-gradient(120deg, var(--primary) 0%, #837dff 100%);
+      color: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      margin-bottom: 0.5rem; padding: 0.5rem 1rem; flex-shrink: 0;
     }
-
-    /* ===== Call Cards ===== */
-    .call-card {
-      cursor: pointer;
-      transition: all 0.2s;
-      border-radius: 8px;
+    .app-title { font-weight: 700; font-size: 1.25rem; margin: 0; }
+    .app-subtitle { font-size: 0.75rem; opacity: 0.9; margin: 0; }
+    .main-content {
+      display: flex; flex: 1; gap: 0.5rem; overflow: hidden;
     }
-
-    .call-card:hover {
-      transform: scale(1.02);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    .left-panel {
+      flex: 1; display: flex; flex-direction: column; gap: 0.5rem; min-width: 0;
     }
-
-    .active-call {
-      border: 2px solid #0d6efd;
-      background-color: #e7f1ff;
+    .right-panel {
+      width: 50%; display: flex; flex-direction: column; min-width: 0;
     }
-
-    /* ===== Card Component Styling ===== */
     .card {
-      border: none;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+      border: none; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+      background: var(--card-bg); overflow: hidden; flex-shrink: 0;
     }
-
     .card-header {
-      background-color: #f8f9fa;
-      font-weight: 600;
-      border-bottom: 1px solid #dee2e6;
+      background: linear-gradient(to right, #f8f9fa, #e9ecef);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05); font-weight: 600;
+      padding: 0.5rem 0.75rem; font-size: 0.9rem;
     }
-
-    /* ===== Status Indicators ===== */
+    .card-body { padding: 0.75rem; overflow: auto; }
+    .compact-card { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .call-card {
+      cursor: pointer; transition: all 0.2s ease; border-radius: 8px;
+      margin-bottom: 0.5rem; border: 1px solid rgba(0, 0, 0, 0.05);
+      padding: 0.5rem; font-size: 0.85rem; display: flex; flex-direction: column;
+    }
+    .call-card:hover {
+      transform: translateX(3px); box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+      border-color: var(--primary);
+    }
+    .call-card.active-call {
+      border: 2px solid var(--primary);
+      background-color: rgba(108, 99, 255, 0.05);
+    }
     .status-indicator {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      display: inline-block;
+      width: 10px; height: 10px; border-radius: 50%; display: inline-block;
       margin-right: 5px;
     }
-
     .status-active {
-      background-color: #28a745;
+      background-color: var(--success);
+      box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
     }
-
-    .status-inactive {
-      background-color: #dc3545;
-    }
-
+    .status-inactive { background-color: var(--danger); }
     .status-pending {
-      background-color: #ffc107;
+      background-color: var(--warning); animation: pulse 1.5s infinite;
     }
-
-    /* ===== Log Console ===== */
+    @keyframes pulse {
+      0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; }
+    }
+    .btn {
+      border-radius: 8px; font-weight: 500; transition: all 0.2s ease;
+      padding: 0.4rem 0.75rem; font-size: 0.85rem;
+    }
+    .btn-primary {
+      background: linear-gradient(to right, var(--primary), #837dff); border: none;
+    }
+    .btn-success {
+      background: linear-gradient(to right, var(--success), #66bb6a); border: none;
+    }
+    .btn-danger {
+      background: linear-gradient(to right, var(--danger), #ef5350); border: none;
+    }
+    .btn-warning {
+      background: linear-gradient(to right, var(--warning), #ffa726); border: none;
+    }
+    .btn-info {
+      background: linear-gradient(to right, var(--info), #26c6da); border: none;
+    }
+    .btn:hover {
+      transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .btn:active { transform: translateY(0); }
+    .form-control {
+      border-radius: 8px; padding: 0.4rem 0.75rem; border: 1px solid #ced4da;
+      transition: all 0.3s; font-size: 0.85rem; height: auto;
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.25);
+    }
+    .timer-input { max-width: 80px; text-align: center; font-weight: 600; }
+    .scheduled-timer {
+      background: linear-gradient(to right, rgba(255, 152, 0, 0.1), rgba(255, 152, 0, 0.05));
+      border-left: 3px solid var(--warning); border-radius: 6px;
+      margin-bottom: 0.4rem; padding: 0.4rem; font-size: 0.8rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
     #responseLog {
-      font-family: monospace;
-      height: 200px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      background-color: #f8f9fa;
-      padding: 10px;
-      border-radius: 5px;
+      font-family: 'Fira Code', 'Consolas', monospace; overflow-y: auto;
+      white-space: pre-wrap; background-color: #f8f9fa; padding: 0.5rem;
+      border-radius: 8px; font-size: 0.8rem; line-height: 1.4; flex: 1; min-height: 0;
     }
-
-    .btn i {
-      margin-right: 5px;
+    .log-entry { border-bottom: 1px solid #eee; padding: 0.2rem 0; }
+    .log-time { color: var(--info); font-weight: 500; }
+    .caller-info { font-weight: 600; color: var(--primary); font-size: 0.8rem; }
+    .callee-info { font-weight: 600; color: var(--info); font-size: 0.8rem; }
+    .uuid-badge {
+      font-family: monospace; background: rgba(108, 99, 255, 0.1);
+      color: var(--primary); font-size: 0.75rem; padding: 0.2rem 0.4rem;
+    }
+    .control-section {
+      background: rgba(248, 249, 250, 0.7); border-radius: 8px;
+      padding: 0.75rem; margin-bottom: 0.5rem;
+    }
+    .section-title {
+      font-weight: 600; color: var(--primary); margin-bottom: 0.5rem;
+      padding-bottom: 0.25rem; border-bottom: 1px solid rgba(108, 99, 255, 0.2);
+      font-size: 0.9rem;
+    }
+    .feature-icon { font-size: 1rem; margin-right: 0.5rem; color: var(--primary); }
+    .stats-card { text-align: center; padding: 0.5rem; }
+    .stats-number {
+      font-size: 1.25rem; font-weight: 700; color: var(--primary); margin: 0.25rem 0;
+    }
+    .stats-label { color: var(--text-secondary); font-size: 0.7rem; }
+    .refresh-btn {
+      cursor: pointer; transition: transform 0.5s ease; font-size: 0.9rem;
+    }
+    .refresh-btn:hover { transform: rotate(180deg); }
+    .btn-group-compact { display: flex; gap: 0.25rem; }
+    .btn-group-compact .btn { flex: 1; padding: 0.3rem 0.5rem; }
+    .input-group-compact { display: flex; gap: 0.25rem; align-items: center; }
+    .input-group-compact .form-control { flex: 1; }
+    .compact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .no-calls {
+      text-align: center; color: var(--text-secondary); padding: 1rem;
+      font-size: 0.9rem;
+    }
+    .call-details { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .auto-reload-toggle {
+      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;
+    }
+    .auto-reload-toggle label { font-size: 0.8rem; margin: 0; }
+    .api-status {
+      position: fixed; bottom: 10px; right: 10px; padding: 5px 10px;
+      border-radius: 4px; font-size: 12px; z-index: 1000;
+    }
+    .api-status.connected { background: var(--success); color: white; }
+    .api-status.disconnected { background: var(--danger); color: white; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    @media (max-width: 992px) {
+      .main-content { flex-direction: column; }
+      .left-panel, .right-panel { width: 100%; }
+      .right-panel { flex: 1; }
     }
   </style>
 </head>
-
 <body>
-<div class="container py-5">
-  <h1 class="mb-5 text-center text-primary">🎛 Voice Changer Control Panel</h1>
-
-  <div class="row g-4">
-    <!-- ===== Left Column: Active Calls ===== -->
-    <div class="col-md-6">
-      <div class="card h-100">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">📞 Active Calls</h5>
-          <button id="refreshCalls" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-arrow-clockwise"></i> Refresh
-          </button>
+<div class="app-container">
+  <div class="app-header py-2">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="app-title"><i class="fas fa-microphone-alt me-2"></i>Voice Changer Control</h1>
+        <p class="app-subtitle">Manage calls and voice effects</p>
+      </div>
+      <div class="d-none d-md-block">
+        <div class="stats-card card">
+          <div class="stats-number" id="activeCallsCount">0</div>
+          <div class="stats-label">Active Calls</div>
         </div>
-        <div class="card-body overflow-auto" style="max-height: 400px;">
-          <div id="callsList" class="list-group"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="left-panel">
+      <div class="card compact-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-phone-alt feature-icon"></i>Active Calls</h5>
+          <span class="refresh-btn" id="refreshCalls"><i class="fas fa-sync-alt text-primary"></i></span>
+        </div>
+        <div class="card-body">
+          <div class="auto-reload-toggle">
+            <input type="checkbox" id="autoReloadCalls">
+            <label for="autoReloadCalls">Auto reload (5s)</label>
+          </div>
+          <div id="callsList"></div>
+        </div>
+      </div>
+      <div class="card compact-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-clock feature-icon"></i>Scheduled Terminations</h5>
+          <span class="refresh-btn" id="refreshScheduled"><i class="fas fa-sync-alt text-primary"></i></span>
+        </div>
+        <div class="card-body">
+          <div class="auto-reload-toggle">
+            <input type="checkbox" id="autoReloadScheduled">
+            <label for="autoReloadScheduled">Auto reload (5s)</label>
+          </div>
+          <div id="scheduledList"></div>
         </div>
       </div>
     </div>
 
-    <!-- ===== Right Column: Controls ===== -->
-    <div class="col-md-6">
-      <div class="card h-100">
+    <div class="right-panel">
+      <div class="card compact-card">
         <div class="card-header">
-          <h5 class="mb-0">🎚 Controls</h5>
+          <h5 class="mb-0"><i class="fas fa-sliders-h feature-icon"></i>Controls</h5>
         </div>
         <div class="card-body">
           <!-- Selected Call Info -->
-          <div class="mb-3">
-            <label class="form-label">Selected Call</label>
-            <div class="input-group">
+          <div class="control-section">
+            <h6 class="section-title"><i class="fas fa-phone me-2"></i>Selected Call</h6>
+            <div class="input-group mb-2">
+              <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
               <input id="selectedCall" type="text" class="form-control" readonly>
               <span id="callStatus" class="input-group-text">
-                  <span class="status-indicator status-inactive"></span>
-                  <span>No call selected</span>
-                </span>
+                <span class="status-indicator status-inactive"></span>
+                <span>No call selected</span>
+              </span>
             </div>
           </div>
 
-          <!-- Start / Stop Buttons -->
-          <div class="d-flex gap-2 mb-3">
-            <button id="startBtn" class="btn btn-success flex-grow-1" disabled>
-              <i class="bi bi-play-fill"></i> Start
-            </button>
-            <button id="stopBtn" class="btn btn-danger flex-grow-1" disabled>
-              <i class="bi bi-stop-fill"></i> Stop
-            </button>
+          <!-- Timer Input -->
+          <div class="control-section">
+            <h6 class="section-title"><i class="fas fa-hourglass-half me-2"></i>Schedule Termination</h6>
+            <div class="input-group-compact mb-2">
+              <input id="timerInput" type="number" class="form-control timer-input" placeholder="Sec" min="1">
+              <button id="scheduleBtn" class="btn btn-info" disabled>
+                <i class="fas fa-alarm-clock"></i> Schedule
+              </button>
+              <button id="cancelScheduleBtn" class="btn btn-outline-secondary" disabled>
+                <i class="fas fa-ban"></i>
+              </button>
+            </div>
           </div>
 
-          <!-- Terminate / Check Buttons -->
-          <div class="d-flex gap-2 mb-3">
-            <button id="terminateBtn" class="btn btn-warning flex-grow-1" disabled>
-              <i class="bi bi-telephone-x-fill"></i> End Call
-            </button>
-            <button id="checkStatusBtn" class="btn btn-secondary flex-grow-1">
-              <i class="bi bi-arrow-repeat"></i> Check Status
-            </button>
+          <!-- Voice Changer Controls -->
+          <div class="control-section">
+            <h6 class="section-title"><i class="fas fa-magic me-2"></i>Voice Changer</h6>
+            <div class="btn-group-compact mb-2">
+              <button id="startBtn" class="btn btn-success" disabled>
+                <i class="fas fa-play"></i> Start
+              </button>
+              <button id="stopBtn" class="btn btn-danger" disabled>
+                <i class="fas fa-stop"></i> Stop
+              </button>
+            </div>
+            <div id="voiceStatus" class="mt-2 small text-muted">Voice changer status: Not active</div>
+          </div>
+
+          <!-- Call Controls -->
+          <div class="control-section">
+            <h6 class="section-title"><i class="fas fa-phone me-2"></i>Call Management</h6>
+            <div class="btn-group-compact mb-2">
+              <button id="terminateBtn" class="btn btn-warning" disabled>
+                <i class="fas fa-phone-slash"></i> End
+              </button>
+              <button id="checkStatusBtn" class="btn btn-secondary">
+                <i class="fas fa-sync"></i> Status
+              </button>
+            </div>
           </div>
 
           <!-- Log Panel -->
-          <div class="card mt-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h6 class="mb-0">📄 Response Log</h6>
-              <button id="clearLog" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-trash"></i> Clear
+          <div class="control-section" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <h6 class="section-title"><i class="fas fa-terminal me-2"></i>Activity Log</h6>
+            <div id="responseLog"></div>
+            <div class="d-flex justify-content-end mt-1">
+              <button id="clearLog" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-trash"></i> Clear
               </button>
             </div>
-            <div id="responseLog" class="card-body"></div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <div id="apiStatus" class="api-status disconnected">API: Disconnected</div>
 </div>
 
-<!-- ===== Bootstrap JS ===== -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- ===== Custom Script Logic ===== -->
 <script>
+  const API_BASE_URL = 'http://localhost:8080/voicechanger';
+
   let selectedCall = null;
   let activeVoiceChanger = false;
-  let statusCheckInterval = null;
+  let scheduledTerminationInterval = null;
+  let autoReloadInterval = null;
+  let callDurationTimers = {}; // { uuid: secondsElapsed }
+  let scheduledCalls = {}; // { uuid: { endTime: timestamp } }
 
   document.addEventListener('DOMContentLoaded', () => {
     loadActiveCalls();
+    loadScheduledTerminations();
 
     document.getElementById('refreshCalls').addEventListener('click', loadActiveCalls);
+    document.getElementById('refreshScheduled').addEventListener('click', loadScheduledTerminations);
     document.getElementById('startBtn').addEventListener('click', () => sendCommand('start'));
     document.getElementById('stopBtn').addEventListener('click', () => sendCommand('stop'));
     document.getElementById('terminateBtn').addEventListener('click', terminateCall);
-    document.getElementById('checkStatusBtn').addEventListener('click', () => {
-      if (selectedCall) checkVoiceChangerStatus(selectedCall, true);
-    });
-    document.getElementById('clearLog').addEventListener('click', () => {
-      document.getElementById('responseLog').innerHTML = '';
-    });
+    document.getElementById('scheduleBtn').addEventListener('click', scheduleTermination);
+    document.getElementById('cancelScheduleBtn').addEventListener('click', cancelScheduledTermination);
+    document.getElementById('checkStatusBtn').addEventListener('click', () => { if(selectedCall) checkVoiceChangerStatus(selectedCall, true); });
+    document.getElementById('clearLog').addEventListener('click', () => { document.getElementById('responseLog').innerHTML = ''; logResponse('Log cleared'); });
+
+    // Auto-reload toggles
+    document.getElementById('autoReloadCalls').addEventListener('change', toggleAutoReload);
+    document.getElementById('autoReloadScheduled').addEventListener('change', toggleAutoReload);
+
+    scheduledTerminationInterval = setInterval(() => {
+      updateScheduledTimers();
+      updateCallDurations();
+    }, 1000);
+
+    // Check API connection on load
+    checkAPIConnection();
   });
 
-  function loadActiveCalls() {
-    logResponse('Loading active calls...');
-    fetch('http://98.70.40.108/api/voicechanger/calls')
-            .then(response => {
-              if (!response.ok) throw new Error('Network response was not ok');
-              return response.json();
-            })
-            .then(calls => {
-              const callsList = document.getElementById('callsList');
-              callsList.innerHTML = '';
-
-              if (calls.length === 0) {
-                callsList.innerHTML = '<div class="list-group-item text-muted">No active calls found</div>';
-                logResponse('No active calls found');
-                return;
-              }
-
-              logResponse(`Found ${calls.length} active calls`);
-              calls.forEach(call => {
-                const callElement = document.createElement('button');
-                callElement.className = 'list-group-item list-group-item-action call-card';
-                callElement.innerHTML = `
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>${call.caller || 'Unknown'}</strong> →
-                  <strong>${call.callee || 'Unknown'}</strong>
-                </div>
-                <div>
-                  <span class="badge bg-secondary">${call.uuid.substring(0, 8)}...</span>
-                </div>
-              </div>
-            `;
-                callElement.addEventListener('click', () => selectCall(call.uuid));
-                callsList.appendChild(callElement);
-              });
-            })
-            .catch(error => {
-              logResponse('Error loading calls: ' + error.message);
-            });
+  // ---------- API CONNECTION CHECK ----------
+  async function checkAPIConnection() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/calls`);
+      const statusEl = document.getElementById('apiStatus');
+      if (response.ok) {
+        statusEl.className = 'api-status connected';
+        statusEl.textContent = 'API: Connected';
+      } else {
+        statusEl.className = 'api-status disconnected';
+        statusEl.textContent = 'API: Error';
+      }
+    } catch (error) {
+      const statusEl = document.getElementById('apiStatus');
+      statusEl.className = 'api-status disconnected';
+      statusEl.textContent = 'API: Disconnected';
+    }
   }
 
+  // ---------- AUTO RELOAD ----------
+  function toggleAutoReload(e) {
+    const isCalls = e.target.id === 'autoReloadCalls';
+
+    if (e.target.checked) {
+      // Start auto reload
+      if (!autoReloadInterval) {
+        autoReloadInterval = setInterval(() => {
+          if (document.getElementById('autoReloadCalls').checked) loadActiveCalls();
+          if (document.getElementById('autoReloadScheduled').checked) loadScheduledTerminations();
+        }, 2000);
+        logResponse(`Auto reload ${isCalls ? 'calls' : 'scheduled terminations'} enabled`);
+      }
+    } else {
+      // Check if both are unchecked, then stop interval
+      const callsChecked = document.getElementById('autoReloadCalls').checked;
+      const scheduledChecked = document.getElementById('autoReloadScheduled').checked;
+
+      if (!callsChecked && !scheduledChecked && autoReloadInterval) {
+        clearInterval(autoReloadInterval);
+        autoReloadInterval = null;
+        logResponse('Auto reload disabled');
+      } else {
+        logResponse(`Auto reload ${isCalls ? 'calls' : 'scheduled terminations'} disabled`);
+      }
+    }
+  }
+
+  // ---------- LOGGING ----------
+  function logResponse(msg) {
+    const logDiv = document.getElementById('responseLog');
+    const time = new Date().toLocaleTimeString();
+    logDiv.innerHTML = `<div class="log-entry"><span class="log-time">[${time}]</span> ${msg}</div>` + logDiv.innerHTML;
+    logDiv.scrollTop = 0;
+  }
+
+  // ---------- FETCH HELPERS ----------
+  async function fetchJSON(url, options = {}) {
+    try {
+      // Add headers if not present
+      if (!options.headers) {
+        options.headers = {
+          'Content-Type': 'application/json'
+        };
+      }
+
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch(e) {
+      logResponse('Error: ' + e.message);
+      checkAPIConnection();
+      return null;
+    }
+  }
+
+  // ---------- ACTIVE CALLS ----------
+  async function loadActiveCalls() {
+    const calls = await fetchJSON(`${API_BASE_URL}/calls`);
+    const listDiv = document.getElementById('callsList');
+
+    // Remove the auto-reload toggle from the innerHTML clearing
+    const autoReloadToggle = listDiv.querySelector('.auto-reload-toggle');
+    listDiv.innerHTML = '';
+    if (autoReloadToggle) listDiv.appendChild(autoReloadToggle);
+
+    if (!calls || calls.length === 0) {
+      listDiv.innerHTML += '<div class="no-calls">No active calls</div>';
+      document.getElementById('activeCallsCount').innerText = 0;
+      return;
+    }
+
+    document.getElementById('activeCallsCount').innerText = calls.length;
+
+    calls.forEach(call => {
+      const card = document.createElement('div');
+      card.className = 'call-card';
+      if(selectedCall && selectedCall === call.uuid) card.classList.add('active-call');
+
+      // Display all call data
+      card.innerHTML = `
+        <div><span class="caller-info">${call.caller}</span> → <span class="callee-info">${call.callee}</span></div>
+        <div>UUID: <span class="uuid-badge">${call.uuid}</span></div>
+        <div>Duration: <span id="duration-${call.uuid}">${formatSeconds(call.durationSeconds || 0)}</span></div>
+        <div class="call-details">
+          ${Object.entries(call)
+              .filter(([key]) => !['uuid', 'caller', 'callee', 'durationSeconds'].includes(key))
+              .map(([key, value]) => `${key}: ${value}`)
+              .join(' | ')}
+        </div>
+      `;
+
+      card.addEventListener('click', () => selectCall(call.uuid));
+      listDiv.appendChild(card);
+
+      // Initialize duration timer if not exists
+      if(!(call.uuid in callDurationTimers)) {
+        callDurationTimers[call.uuid] = call.durationSeconds || 0;
+      }
+    });
+
+    checkAPIConnection();
+  }
+
+  function updateCallDurations() {
+    Object.keys(callDurationTimers).forEach(uuid => {
+      callDurationTimers[uuid]++;
+      const el = document.getElementById(`duration-${uuid}`);
+      if(el) el.innerText = formatSeconds(callDurationTimers[uuid]);
+    });
+  }
+
+  function formatSeconds(s) {
+    const m = Math.floor(s/60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2,'0')}`;
+  }
+
+  // ---------- SCHEDULED TERMINATIONS ----------
+  async function loadScheduledTerminations() {
+    const sched = await fetchJSON(`${API_BASE_URL}/scheduled-terminations`);
+    const listDiv = document.getElementById('scheduledList');
+
+    // Remove the auto-reload toggle from the innerHTML clearing
+    const autoReloadToggle = listDiv.querySelector('.auto-reload-toggle');
+    listDiv.innerHTML = '';
+    if (autoReloadToggle) listDiv.appendChild(autoReloadToggle);
+
+    if (!sched || sched.length === 0) {
+      listDiv.innerHTML += '<div class="no-calls">No scheduled terminations</div>';
+      return;
+    }
+
+    sched.forEach(s => {
+      const endTime = new Date(s.endTime).getTime();
+      scheduledCalls[s.uuid] = { endTime };
+      const card = document.createElement('div');
+      card.className = 'scheduled-timer';
+      card.id = `scheduled-${s.uuid}`;
+      card.innerHTML = `
+        <div>
+          <span>${s.caller} → ${s.callee}</span>
+          <div class="call-details">
+            ${Object.entries(s)
+              .filter(([key]) => !['uuid', 'caller', 'callee', 'endTime'].includes(key))
+              .map(([key, value]) => `${key}: ${value}`)
+              .join(' | ')}
+          </div>
+        </div>
+        <span id="remaining-${s.uuid}">--</span>
+      `;
+      listDiv.appendChild(card);
+    });
+
+    checkAPIConnection();
+  }
+
+  function updateScheduledTimers() {
+    const now = Date.now();
+    Object.keys(scheduledCalls).forEach(uuid => {
+      const remaining = Math.max(0, Math.floor((scheduledCalls[uuid].endTime - now)/1000));
+      const el = document.getElementById(`remaining-${uuid}`);
+      if(el) el.innerText = `${remaining}s`;
+      if(remaining<=0) delete scheduledCalls[uuid];
+    });
+  }
+
+  // ---------- SELECT CALL ----------
   function selectCall(uuid) {
     selectedCall = uuid;
     document.getElementById('selectedCall').value = uuid;
-    document.querySelectorAll('.call-card').forEach(el => el.classList.remove('active-call'));
+    document.querySelectorAll('.call-card').forEach(c => c.classList.remove('active-call'));
 
-    Array.from(document.querySelectorAll('.call-card')).find(el =>
-            el.textContent.includes(uuid.substring(0, 8))
-    )?.classList.add('active-call');
+    // Find and highlight the selected call card
+    document.querySelectorAll('.call-card').forEach(c => {
+      if(c.innerText.includes(uuid)) c.classList.add('active-call');
+    });
 
     document.getElementById('startBtn').disabled = false;
+    document.getElementById('stopBtn').disabled = false;
     document.getElementById('terminateBtn').disabled = false;
+    document.getElementById('scheduleBtn').disabled = false;
+    document.getElementById('cancelScheduleBtn').disabled = false;
 
-    checkVoiceChangerStatus(uuid, true);
-
-    if (statusCheckInterval) clearInterval(statusCheckInterval);
-    statusCheckInterval = setInterval(() => checkVoiceChangerStatus(uuid, false), 5000);
-  }
-
-  function checkVoiceChangerStatus(uuid, userInitiated) {
-    if (userInitiated) logResponse(`Checking status for call ${uuid.substring(0, 8)}...`);
-
-    fetch(`http://98.70.40.108/api/voicechanger/status?uuid=${uuid}`)
-            .then(response => {
-              if (!response.ok) throw new Error('Network response was not ok');
-              return response.json();
-            })
-            .then(data => {
-              if (userInitiated) logResponse(`Status: ${data.message}`);
-              updateActiveStatus(data.active);
-            })
-            .catch(error => {
-              if (userInitiated) logResponse('Error: ' + error.message);
-              updateActiveStatus(false);
-            });
-  }
-
-  function updateActiveStatus(isActive) {
-    activeVoiceChanger = isActive;
+    // Update status indicator
     const statusIndicator = document.querySelector('#callStatus .status-indicator');
-    const statusText = document.querySelector('#callStatus span:last-child');
+    statusIndicator.className = 'status-indicator status-active';
+    document.querySelector('#callStatus span:last-child').textContent = 'Active';
 
-    statusIndicator.classList.remove('status-active', 'status-inactive', 'status-pending');
+    // Check voice changer status for this call
+    checkVoiceChangerStatus(uuid, false);
 
-    if (isActive) {
-      statusIndicator.classList.add('status-active');
-      statusText.textContent = 'Active';
+    logResponse(`Selected call: ${uuid}`);
+  }
+
+  // ---------- VOICE CHANGER ----------
+  async function sendCommand(cmd) {
+    if(!selectedCall) return;
+
+    // Updated to use the correct API format with JSON body
+    const res = await fetchJSON(`${API_BASE_URL}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        command: cmd,
+        uuid: selectedCall
+      })
+    });
+
+    if(res) {
+      logResponse(`${cmd.toUpperCase()} command sent for ${selectedCall}`);
+
+      // Update voice changer status
+      if (cmd === 'start') {
+        activeVoiceChanger = true;
+        document.getElementById('voiceStatus').textContent = 'Voice changer status: Active';
+        document.getElementById('voiceStatus').className = 'mt-2 small text-success';
+      } else if (cmd === 'stop') {
+        activeVoiceChanger = false;
+        document.getElementById('voiceStatus').textContent = 'Voice changer status: Not active';
+        document.getElementById('voiceStatus').className = 'mt-2 small text-muted';
+      }
+    }
+  }
+
+  // ---------- TERMINATE CALL ----------
+  async function terminateCall() {
+    if(!selectedCall) return;
+    const res = await fetchJSON(`${API_BASE_URL}/terminate?uuid=${selectedCall}`, {method:'POST'});
+    if(res) {
+      logResponse(`Call ${selectedCall} terminated`);
+      // Reset selection
+      selectedCall = null;
+      document.getElementById('selectedCall').value = '';
+      document.querySelectorAll('.call-card').forEach(c => c.classList.remove('active-call'));
       document.getElementById('startBtn').disabled = true;
-      document.getElementById('stopBtn').disabled = false;
-    } else {
-      statusIndicator.classList.add('status-inactive');
-      statusText.textContent = 'Inactive';
-      document.getElementById('startBtn').disabled = false;
       document.getElementById('stopBtn').disabled = true;
-    }
+      document.getElementById('terminateBtn').disabled = true;
+      document.getElementById('scheduleBtn').disabled = true;
+      document.getElementById('cancelScheduleBtn').disabled = true;
 
-    document.getElementById('terminateBtn').disabled = !selectedCall;
+      // Update status indicator
+      const statusIndicator = document.querySelector('#callStatus .status-indicator');
+      statusIndicator.className = 'status-indicator status-inactive';
+      document.querySelector('#callStatus span:last-child').textContent = 'No call selected';
+
+      // Reset voice changer status
+      activeVoiceChanger = false;
+      document.getElementById('voiceStatus').textContent = 'Voice changer status: Not active';
+      document.getElementById('voiceStatus').className = 'mt-2 small text-muted';
+
+      // Reload calls list
+      loadActiveCalls();
+    }
   }
 
-  function sendCommand(command) {
-    if (!selectedCall) {
-      logResponse('Please select a call first');
-      return;
-    }
+  // ---------- SCHEDULE TERMINATION ----------
+  async function scheduleTermination() {
+    if(!selectedCall) return;
+    const sec = parseInt(document.getElementById('timerInput').value);
+    if(isNaN(sec) || sec<=0) return;
 
-    const statusIndicator = document.querySelector('#callStatus .status-indicator');
-    statusIndicator.classList.remove('status-active', 'status-inactive');
-    statusIndicator.classList.add('status-pending');
-
-    const statusText = document.querySelector('#callStatus span:last-child');
-    statusText.textContent = command === 'start' ? 'Starting...' : 'Stopping...';
-
-    document.getElementById('startBtn').disabled = true;
-    document.getElementById('stopBtn').disabled = true;
-    document.getElementById('terminateBtn').disabled = true;
-
-    const payload = { command, uuid: selectedCall };
-    logResponse(`Sending ${command} command to ${selectedCall.substring(0, 8)}...`);
-
-    fetch('http://98.70.40.108/api/voicechanger', {
+    // Updated to use the correct API format with JSON body
+    const res = await fetchJSON(`${API_BASE_URL}/schedule-termination`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-            .then(response => {
-              if (!response.ok) throw new Error('Network response was not ok');
-              return response.text();
-            })
-            .then(text => {
-              logResponse(`Response: ${text}`);
-              setTimeout(() => checkVoiceChangerStatus(selectedCall, true), 1000);
-            })
-            .catch(error => {
-              logResponse('Error: ' + error.message);
-              setTimeout(() => checkVoiceChangerStatus(selectedCall, true), 1000);
-            });
-  }
+      body: JSON.stringify({
+        uuid: selectedCall,
+        seconds: sec
+      })
+    });
 
-  function terminateCall() {
-    if (!selectedCall) {
-      logResponse('No call selected');
-      return;
+    if(res) {
+      logResponse(`Termination scheduled in ${sec}s for ${selectedCall}`);
+      loadScheduledTerminations();
     }
-
-    if (!confirm('Are you sure you want to end this call?')) return;
-
-    logResponse(`Terminating call ${selectedCall.substring(0, 8)}...`);
-    document.getElementById('terminateBtn').disabled = true;
-
-    fetch('http://98.70.40.108/api/voicechanger/terminate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uuid: selectedCall })
-    })
-            .then(response => {
-              if (!response.ok) throw new Error('Network response was not ok');
-              return response.text();
-            })
-            .then(text => {
-              logResponse(`Result: ${text}`);
-              setTimeout(loadActiveCalls, 1000);
-            })
-            .catch(error => {
-              logResponse('Error: ' + error.message);
-            })
-            .finally(() => {
-              document.getElementById('terminateBtn').disabled = false;
-            });
   }
 
-  function logResponse(message) {
-    const log = document.getElementById('responseLog');
-    const entry = document.createElement('div');
-    entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-    log.appendChild(entry);
-    log.scrollTop = log.scrollHeight;
+  async function cancelScheduledTermination() {
+    if(!selectedCall) return;
+    const res = await fetchJSON(`${API_BASE_URL}/cancel-schedule?uuid=${selectedCall}`, {method:'POST'});
+    if(res) {
+      logResponse(`Scheduled termination canceled for ${selectedCall}`);
+      loadScheduledTerminations();
+    }
+  }
+
+  // ---------- CHECK STATUS ----------
+  async function checkVoiceChangerStatus(uuid, log=true) {
+    const res = await fetchJSON(`${API_BASE_URL}/status?uuid=${uuid}`);
+    if(res) {
+      if(log) logResponse(`Voice changer status for ${uuid}: ${res.status}`);
+
+      // Update voice changer status display
+      if (res.status === 'active') {
+        activeVoiceChanger = true;
+        document.getElementById('voiceStatus').textContent = 'Voice changer status: Active';
+        document.getElementById('voiceStatus').className = 'mt-2 small text-success';
+      } else {
+        activeVoiceChanger = false;
+        document.getElementById('voiceStatus').textContent = 'Voice changer status: Not active';
+        document.getElementById('voiceStatus').className = 'mt-2 small text-muted';
+      }
+    }
   }
 </script>
 </body>
