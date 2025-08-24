@@ -101,6 +101,11 @@
       transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     .btn:active { transform: translateY(0); }
+    .btn.active {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      border: 2px solid #fff;
+    }
     .form-control {
       border-radius: 8px; padding: 0.4rem 0.75rem; border: 1px solid #ced4da;
       transition: all 0.3s; font-size: 0.85rem; height: auto;
@@ -158,10 +163,6 @@
       font-size: 0.9rem;
     }
     .call-details { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem; }
-    .auto-reload-toggle {
-      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;
-    }
-    .auto-reload-toggle label { font-size: 0.8rem; margin: 0; }
     .api-status {
       position: fixed; bottom: 10px; right: 10px; padding: 5px 10px;
       border-radius: 4px; font-size: 12px; z-index: 1000;
@@ -204,23 +205,15 @@
           <span class="refresh-btn" id="refreshCalls"><i class="fas fa-sync-alt text-primary"></i></span>
         </div>
         <div class="card-body">
-          <div class="auto-reload-toggle">
-            <input type="checkbox" id="autoReloadCalls">
-            <label for="autoReloadCalls">Auto reload (5s)</label>
-          </div>
           <div id="callsList"></div>
         </div>
       </div>
       <div class="card compact-card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="fas fa-clock feature-icon"></i>Scheduled Terminations</h5>
+          <h5 class="mb-0"><i class="fas fa-clock feature-icon"></i>Auto Terminations</h5>
           <span class="refresh-btn" id="refreshScheduled"><i class="fas fa-sync-alt text-primary"></i></span>
         </div>
         <div class="card-body">
-          <div class="auto-reload-toggle">
-            <input type="checkbox" id="autoReloadScheduled">
-            <label for="autoReloadScheduled">Auto reload (5s)</label>
-          </div>
           <div id="scheduledList"></div>
         </div>
       </div>
@@ -245,18 +238,19 @@
             </div>
           </div>
 
-          <!-- Timer Input -->
+          <!-- Global Call Duration -->
           <div class="control-section">
-            <h6 class="section-title"><i class="fas fa-hourglass-half me-2"></i>Schedule Termination</h6>
+            <h6 class="section-title"><i class="fas fa-globe feature-icon"></i>Global Call Duration</h6>
             <div class="input-group-compact mb-2">
-              <input id="timerInput" type="number" class="form-control timer-input" placeholder="Sec" min="1">
-              <button id="scheduleBtn" class="btn btn-info" disabled>
-                <i class="fas fa-alarm-clock"></i> Schedule
+              <input id="globalDurationInput" type="number" class="form-control timer-input" placeholder="Sec" min="1">
+              <button id="setGlobalDurationBtn" class="btn btn-info">
+                <i class="fas fa-save"></i> Set
               </button>
-              <button id="cancelScheduleBtn" class="btn btn-outline-secondary" disabled>
-                <i class="fas fa-ban"></i>
+              <button id="clearGlobalDurationBtn" class="btn btn-outline-secondary">
+                <i class="fas fa-times"></i> Clear
               </button>
             </div>
+            <div id="globalDurationStatus" class="mt-2 small text-muted">Global duration: Not set</div>
           </div>
 
           <!-- Voice Changer Controls -->
@@ -273,15 +267,31 @@
             <div id="voiceStatus" class="mt-2 small text-muted">Voice changer status: Not active</div>
           </div>
 
+          <!-- Voice Types -->
+          <div class="control-section">
+            <h6 class="section-title"><i class="fas fa-voice feature-icon"></i>Voice Types</h6>
+            <div class="btn-group-compact mb-2">
+              <button id="femaleBtn" class="btn btn-primary" disabled>
+                <i class="fas fa-venus"></i> Female
+              </button>
+              <button id="childBtn" class="btn btn-info" disabled>
+                <i class="fas fa-child"></i> Child
+              </button>
+              <button id="monsterBtn" class="btn btn-warning" disabled>
+                <i class="fas fa-dragon"></i> Monster
+              </button>
+            </div>
+          </div>
+
           <!-- Call Controls -->
           <div class="control-section">
             <h6 class="section-title"><i class="fas fa-phone me-2"></i>Call Management</h6>
             <div class="btn-group-compact mb-2">
               <button id="terminateBtn" class="btn btn-warning" disabled>
-                <i class="fas fa-phone-slash"></i> End
+                <i class="fas fa-phone-slash"></i> End Call
               </button>
               <button id="checkStatusBtn" class="btn btn-secondary">
-                <i class="fas fa-sync"></i> Status
+                <i class="fas fa-sync"></i> Refresh
               </button>
             </div>
           </div>
@@ -310,37 +320,66 @@
 
   let selectedCall = null;
   let activeVoiceChanger = false;
-  let scheduledTerminationInterval = null;
-  let autoReloadInterval = null;
-  let callDurationTimers = {}; // { uuid: secondsElapsed }
-  let scheduledCalls = {}; // { uuid: { endTime: timestamp } }
+  let autoRefreshInterval = null;
+  let callDurationTimers = {};
+  let scheduledCalls = {};
 
   document.addEventListener('DOMContentLoaded', () => {
-    loadActiveCalls();
-    loadScheduledTerminations();
+    initializeApp();
+  });
 
+  function initializeApp() {
+    // Event listeners
     document.getElementById('refreshCalls').addEventListener('click', loadActiveCalls);
     document.getElementById('refreshScheduled').addEventListener('click', loadScheduledTerminations);
     document.getElementById('startBtn').addEventListener('click', () => sendCommand('start'));
     document.getElementById('stopBtn').addEventListener('click', () => sendCommand('stop'));
     document.getElementById('terminateBtn').addEventListener('click', terminateCall);
-    document.getElementById('scheduleBtn').addEventListener('click', scheduleTermination);
-    document.getElementById('cancelScheduleBtn').addEventListener('click', cancelScheduledTermination);
-    document.getElementById('checkStatusBtn').addEventListener('click', () => { if(selectedCall) checkVoiceChangerStatus(selectedCall, true); });
-    document.getElementById('clearLog').addEventListener('click', () => { document.getElementById('responseLog').innerHTML = ''; logResponse('Log cleared'); });
+    document.getElementById('checkStatusBtn').addEventListener('click', refreshAll);
+    document.getElementById('clearLog').addEventListener('click', clearLog);
 
-    // Auto-reload toggles
-    document.getElementById('autoReloadCalls').addEventListener('change', toggleAutoReload);
-    document.getElementById('autoReloadScheduled').addEventListener('change', toggleAutoReload);
+    // Voice type buttons
+    document.getElementById('femaleBtn').addEventListener('click', () => setVoiceType('female'));
+    document.getElementById('childBtn').addEventListener('click', () => setVoiceType('child'));
+    document.getElementById('monsterBtn').addEventListener('click', () => setVoiceType('monster'));
 
-    scheduledTerminationInterval = setInterval(() => {
-      updateScheduledTimers();
-      updateCallDurations();
-    }, 1000);
+    // Global duration buttons
+    document.getElementById('setGlobalDurationBtn').addEventListener('click', setGlobalDuration);
+    document.getElementById('clearGlobalDurationBtn').addEventListener('click', clearGlobalDuration);
 
-    // Check API connection on load
+    // Start auto refresh
+    startAutoRefresh();
+
+    // Initial load
+    refreshAll();
+  }
+
+  function refreshAll() {
+    loadActiveCalls();
+    loadScheduledTerminations();
+    updateGlobalDurationStatus();
     checkAPIConnection();
-  });
+  }
+
+  function startAutoRefresh() {
+    // Clear any existing interval
+    if (autoRefreshInterval) {
+      clearInterval(autoRefreshInterval);
+    }
+
+    // Refresh every 2 seconds
+    autoRefreshInterval = setInterval(() => {
+      loadActiveCalls();
+      loadScheduledTerminations();
+      updateCallDurations();
+      updateScheduledTimers();
+    }, 2000);
+  }
+
+  function clearLog() {
+    document.getElementById('responseLog').innerHTML = '';
+    logResponse('Log cleared');
+  }
 
   // ---------- API CONNECTION CHECK ----------
   async function checkAPIConnection() {
@@ -361,59 +400,88 @@
     }
   }
 
-  // ---------- AUTO RELOAD ----------
-  function toggleAutoReload(e) {
-    const isCalls = e.target.id === 'autoReloadCalls';
-
-    if (e.target.checked) {
-      // Start auto reload
-      if (!autoReloadInterval) {
-        autoReloadInterval = setInterval(() => {
-          if (document.getElementById('autoReloadCalls').checked) loadActiveCalls();
-          if (document.getElementById('autoReloadScheduled').checked) loadScheduledTerminations();
-        }, 2000);
-        logResponse(`Auto reload ${isCalls ? 'calls' : 'scheduled terminations'} enabled`);
-      }
-    } else {
-      // Check if both are unchecked, then stop interval
-      const callsChecked = document.getElementById('autoReloadCalls').checked;
-      const scheduledChecked = document.getElementById('autoReloadScheduled').checked;
-
-      if (!callsChecked && !scheduledChecked && autoReloadInterval) {
-        clearInterval(autoReloadInterval);
-        autoReloadInterval = null;
-        logResponse('Auto reload disabled');
-      } else {
-        logResponse(`Auto reload ${isCalls ? 'calls' : 'scheduled terminations'} disabled`);
-      }
-    }
-  }
-
   // ---------- LOGGING ----------
   function logResponse(msg) {
     const logDiv = document.getElementById('responseLog');
     const time = new Date().toLocaleTimeString();
     logDiv.innerHTML = `<div class="log-entry"><span class="log-time">[${time}]</span> ${msg}</div>` + logDiv.innerHTML;
-    logDiv.scrollTop = 0;
   }
 
   // ---------- FETCH HELPERS ----------
   async function fetchJSON(url, options = {}) {
     try {
-      // Add headers if not present
       if (!options.headers) {
-        options.headers = {
-          'Content-Type': 'application/json'
-        };
+        options.headers = { 'Content-Type': 'application/json' };
       }
 
       const res = await fetch(url, options);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+
+      // Try to parse as JSON, fall back to text if it fails
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        // If it's not JSON, return it as a message
+        return { message: text };
+      }
     } catch(e) {
       logResponse('Error: ' + e.message);
       checkAPIConnection();
       return null;
+    }
+  }
+  // ---------- GLOBAL CALL DURATION ----------
+  async function setGlobalDuration() {
+    const sec = parseInt(document.getElementById('globalDurationInput').value);
+    if(isNaN(sec) || sec<=0) {
+      logResponse("Error: Please enter a valid duration in seconds");
+      return;
+    }
+
+    const res = await fetchJSON(`${API_BASE_URL}/global-duration`, {
+      method: 'POST',
+      body: JSON.stringify({ seconds: sec })
+    });
+
+    if(res) {
+      // Handle both JSON response and plain text response
+      const message = res.message || res;
+      logResponse(typeof message === 'string' ? message : JSON.stringify(message));
+      updateGlobalDurationStatus();
+      loadScheduledTerminations();
+    }
+  }
+  async function clearGlobalDuration() {
+    const res = await fetchJSON(`${API_BASE_URL}/global-duration`, {
+      method: 'DELETE'
+    });
+
+    if(res) {
+      const message = res.message || res;
+      logResponse(typeof message === 'string' ? message : JSON.stringify(message));
+      updateGlobalDurationStatus();
+      loadScheduledTerminations();
+    }
+  }
+  async function updateGlobalDurationStatus() {
+    try {
+      const res = await fetchJSON(`${API_BASE_URL}/global-duration`);
+      if(res) {
+        const statusElement = document.getElementById('globalDurationStatus');
+        // Handle different response formats
+        const duration = res.duration || (typeof res === 'number' ? res : 0);
+
+        if(duration > 0) {
+          statusElement.textContent = `Global duration: ${duration} seconds`;
+          statusElement.className = 'mt-2 small text-success';
+        } else {
+          statusElement.textContent = 'Global duration: Not set';
+          statusElement.className = 'mt-2 small text-muted';
+        }
+      }
+    } catch (error) {
+      console.log('Could not fetch global duration status');
     }
   }
 
@@ -422,41 +490,34 @@
     const calls = await fetchJSON(`${API_BASE_URL}/calls`);
     const listDiv = document.getElementById('callsList');
 
-    // Remove the auto-reload toggle from the innerHTML clearing
-    const autoReloadToggle = listDiv.querySelector('.auto-reload-toggle');
-    listDiv.innerHTML = '';
-    if (autoReloadToggle) listDiv.appendChild(autoReloadToggle);
-
     if (!calls || calls.length === 0) {
-      listDiv.innerHTML += '<div class="no-calls">No active calls</div>';
-      document.getElementById('activeCallsCount').innerText = 0;
+      listDiv.innerHTML = '<div class="no-calls">No active calls</div>';
+      document.getElementById('activeCallsCount').innerText = '0';
+
+      // If no calls, clear selection
+      if (selectedCall) {
+        resetSelection();
+      }
       return;
     }
 
     document.getElementById('activeCallsCount').innerText = calls.length;
+    listDiv.innerHTML = '';
 
     calls.forEach(call => {
       const card = document.createElement('div');
       card.className = 'call-card';
       if(selectedCall && selectedCall === call.uuid) card.classList.add('active-call');
 
-      // Display all call data
       card.innerHTML = `
         <div><span class="caller-info">${call.caller}</span> → <span class="callee-info">${call.callee}</span></div>
         <div>UUID: <span class="uuid-badge">${call.uuid}</span></div>
         <div>Duration: <span id="duration-${call.uuid}">${formatSeconds(call.durationSeconds || 0)}</span></div>
-        <div class="call-details">
-          ${Object.entries(call)
-              .filter(([key]) => !['uuid', 'caller', 'callee', 'durationSeconds'].includes(key))
-              .map(([key, value]) => `${key}: ${value}`)
-              .join(' | ')}
-        </div>
       `;
 
       card.addEventListener('click', () => selectCall(call.uuid));
       listDiv.appendChild(card);
 
-      // Initialize duration timer if not exists
       if(!(call.uuid in callDurationTimers)) {
         callDurationTimers[call.uuid] = call.durationSeconds || 0;
       }
@@ -484,33 +545,23 @@
     const sched = await fetchJSON(`${API_BASE_URL}/scheduled-terminations`);
     const listDiv = document.getElementById('scheduledList');
 
-    // Remove the auto-reload toggle from the innerHTML clearing
-    const autoReloadToggle = listDiv.querySelector('.auto-reload-toggle');
-    listDiv.innerHTML = '';
-    if (autoReloadToggle) listDiv.appendChild(autoReloadToggle);
-
     if (!sched || sched.length === 0) {
-      listDiv.innerHTML += '<div class="no-calls">No scheduled terminations</div>';
+      listDiv.innerHTML = '<div class="no-calls">No auto terminations</div>';
+      scheduledCalls = {};
       return;
     }
+
+    listDiv.innerHTML = '';
+    scheduledCalls = {};
 
     sched.forEach(s => {
       const endTime = new Date(s.endTime).getTime();
       scheduledCalls[s.uuid] = { endTime };
       const card = document.createElement('div');
       card.className = 'scheduled-timer';
-      card.id = `scheduled-${s.uuid}`;
       card.innerHTML = `
-        <div>
-          <span>${s.caller} → ${s.callee}</span>
-          <div class="call-details">
-            ${Object.entries(s)
-              .filter(([key]) => !['uuid', 'caller', 'callee', 'endTime'].includes(key))
-              .map(([key, value]) => `${key}: ${value}`)
-              .join(' | ')}
-          </div>
-        </div>
-        <span id="remaining-${s.uuid}">--</span>
+        <div>${s.caller} → ${s.callee}</div>
+        <span id="remaining-${s.uuid}">${Math.max(0, Math.floor((endTime - Date.now())/1000))}s</span>
       `;
       listDiv.appendChild(card);
     });
@@ -532,27 +583,22 @@
   function selectCall(uuid) {
     selectedCall = uuid;
     document.getElementById('selectedCall').value = uuid;
-    document.querySelectorAll('.call-card').forEach(c => c.classList.remove('active-call'));
 
-    // Find and highlight the selected call card
+    document.querySelectorAll('.call-card').forEach(c => c.classList.remove('active-call'));
     document.querySelectorAll('.call-card').forEach(c => {
       if(c.innerText.includes(uuid)) c.classList.add('active-call');
     });
 
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = false;
-    document.getElementById('terminateBtn').disabled = false;
-    document.getElementById('scheduleBtn').disabled = false;
-    document.getElementById('cancelScheduleBtn').disabled = false;
+    // Enable buttons
+    const buttons = ['startBtn', 'stopBtn', 'terminateBtn', 'femaleBtn', 'childBtn', 'monsterBtn'];
+    buttons.forEach(btn => document.getElementById(btn).disabled = false);
 
-    // Update status indicator
+    // Update status
     const statusIndicator = document.querySelector('#callStatus .status-indicator');
     statusIndicator.className = 'status-indicator status-active';
     document.querySelector('#callStatus span:last-child').textContent = 'Active';
 
-    // Check voice changer status for this call
     checkVoiceChangerStatus(uuid, false);
-
     logResponse(`Selected call: ${uuid}`);
   }
 
@@ -560,90 +606,84 @@
   async function sendCommand(cmd) {
     if(!selectedCall) return;
 
-    // Updated to use the correct API format with JSON body
     const res = await fetchJSON(`${API_BASE_URL}`, {
       method: 'POST',
-      body: JSON.stringify({
-        command: cmd,
-        uuid: selectedCall
-      })
+      body: JSON.stringify({ command: cmd, uuid: selectedCall })
     });
 
     if(res) {
       logResponse(`${cmd.toUpperCase()} command sent for ${selectedCall}`);
+      updateVoiceChangerStatus(cmd === 'start');
 
-      // Update voice changer status
-      if (cmd === 'start') {
-        activeVoiceChanger = true;
-        document.getElementById('voiceStatus').textContent = 'Voice changer status: Active';
-        document.getElementById('voiceStatus').className = 'mt-2 small text-success';
-      } else if (cmd === 'stop') {
-        activeVoiceChanger = false;
-        document.getElementById('voiceStatus').textContent = 'Voice changer status: Not active';
-        document.getElementById('voiceStatus').className = 'mt-2 small text-muted';
-      }
+      // Auto refresh after command
+      setTimeout(() => {
+        loadActiveCalls();
+        loadScheduledTerminations();
+      }, 500);
+    }
+  }
+
+  function updateVoiceChangerStatus(isActive) {
+    activeVoiceChanger = isActive;
+    const statusElement = document.getElementById('voiceStatus');
+    if (isActive) {
+      statusElement.textContent = 'Voice changer status: Active';
+      statusElement.className = 'mt-2 small text-success';
+    } else {
+      statusElement.textContent = 'Voice changer status: Not active';
+      statusElement.className = 'mt-2 small text-muted';
+    }
+  }
+
+  // ---------- SET VOICE TYPE ----------
+  async function setVoiceType(voiceType) {
+    if(!selectedCall) return;
+
+    const res = await fetchJSON(`${API_BASE_URL}/set-voice-type`, {
+      method: 'POST',
+      body: JSON.stringify({ uuid: selectedCall, voiceType: voiceType })
+    });
+
+    if(res) {
+      logResponse(`Voice type set to ${voiceType} for ${selectedCall}`);
+      document.querySelectorAll('.btn-group-compact .btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(voiceType + 'Btn').classList.add('active');
     }
   }
 
   // ---------- TERMINATE CALL ----------
   async function terminateCall() {
     if(!selectedCall) return;
-    const res = await fetchJSON(`${API_BASE_URL}/terminate?uuid=${selectedCall}`, {method:'POST'});
+    const res = await fetchJSON(`${API_BASE_URL}/terminate`, {
+      method: 'POST',
+      body: JSON.stringify({ uuid: selectedCall })
+    });
     if(res) {
       logResponse(`Call ${selectedCall} terminated`);
-      // Reset selection
-      selectedCall = null;
-      document.getElementById('selectedCall').value = '';
-      document.querySelectorAll('.call-card').forEach(c => c.classList.remove('active-call'));
-      document.getElementById('startBtn').disabled = true;
-      document.getElementById('stopBtn').disabled = true;
-      document.getElementById('terminateBtn').disabled = true;
-      document.getElementById('scheduleBtn').disabled = true;
-      document.getElementById('cancelScheduleBtn').disabled = true;
-
-      // Update status indicator
-      const statusIndicator = document.querySelector('#callStatus .status-indicator');
-      statusIndicator.className = 'status-indicator status-inactive';
-      document.querySelector('#callStatus span:last-child').textContent = 'No call selected';
-
-      // Reset voice changer status
-      activeVoiceChanger = false;
-      document.getElementById('voiceStatus').textContent = 'Voice changer status: Not active';
-      document.getElementById('voiceStatus').className = 'mt-2 small text-muted';
-
-      // Reload calls list
-      loadActiveCalls();
+      resetSelection();
+      setTimeout(() => {
+        loadActiveCalls();
+        loadScheduledTerminations();
+      }, 500);
     }
   }
 
-  // ---------- SCHEDULE TERMINATION ----------
-  async function scheduleTermination() {
-    if(!selectedCall) return;
-    const sec = parseInt(document.getElementById('timerInput').value);
-    if(isNaN(sec) || sec<=0) return;
 
-    // Updated to use the correct API format with JSON body
-    const res = await fetchJSON(`${API_BASE_URL}/schedule-termination`, {
-      method: 'POST',
-      body: JSON.stringify({
-        uuid: selectedCall,
-        seconds: sec
-      })
-    });
+  function resetSelection() {
+    selectedCall = null;
+    document.getElementById('selectedCall').value = '';
+    document.querySelectorAll('.call-card').forEach(c => c.classList.remove('active-call'));
 
-    if(res) {
-      logResponse(`Termination scheduled in ${sec}s for ${selectedCall}`);
-      loadScheduledTerminations();
-    }
-  }
+    // Disable buttons
+    const buttons = ['startBtn', 'stopBtn', 'terminateBtn', 'femaleBtn', 'childBtn', 'monsterBtn'];
+    buttons.forEach(btn => document.getElementById(btn).disabled = true);
 
-  async function cancelScheduledTermination() {
-    if(!selectedCall) return;
-    const res = await fetchJSON(`${API_BASE_URL}/cancel-schedule?uuid=${selectedCall}`, {method:'POST'});
-    if(res) {
-      logResponse(`Scheduled termination canceled for ${selectedCall}`);
-      loadScheduledTerminations();
-    }
+    // Reset status
+    const statusIndicator = document.querySelector('#callStatus .status-indicator');
+    statusIndicator.className = 'status-indicator status-inactive';
+    document.querySelector('#callStatus span:last-child').textContent = 'No call selected';
+
+    updateVoiceChangerStatus(false);
   }
 
   // ---------- CHECK STATUS ----------
@@ -651,17 +691,7 @@
     const res = await fetchJSON(`${API_BASE_URL}/status?uuid=${uuid}`);
     if(res) {
       if(log) logResponse(`Voice changer status for ${uuid}: ${res.status}`);
-
-      // Update voice changer status display
-      if (res.status === 'active') {
-        activeVoiceChanger = true;
-        document.getElementById('voiceStatus').textContent = 'Voice changer status: Active';
-        document.getElementById('voiceStatus').className = 'mt-2 small text-success';
-      } else {
-        activeVoiceChanger = false;
-        document.getElementById('voiceStatus').textContent = 'Voice changer status: Not active';
-        document.getElementById('voiceStatus').className = 'mt-2 small text-muted';
-      }
+      updateVoiceChangerStatus(res.status === 'Active');
     }
   }
 </script>

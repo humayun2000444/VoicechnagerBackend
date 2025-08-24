@@ -11,6 +11,9 @@ public class VoiceChangerDto {
 
     public record CancelScheduledRequest(String uuid) {}
 
+    public record VoiceTypeRequest(String uuid, String voiceType) {}
+    public record GlobalDurationRequest(int seconds) {}
+    public record GlobalDurationResponse(int duration, String status) {}
     // ------------------- Responses -------------------
     public record CallInfo(String uuid, String caller, String callee, long durationSeconds) {}
 
