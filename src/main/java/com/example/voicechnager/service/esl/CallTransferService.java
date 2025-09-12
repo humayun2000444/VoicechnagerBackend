@@ -16,7 +16,7 @@ public class CallTransferService {
      */
     public void transferToDefault(String uuid, String calledNumber) {
         try {
-            String command = String.format("uuid_transfer %s %s XML default", uuid, calledNumber);
+            String command = String.format("uuid_transfer %s %s XML Voice", uuid, calledNumber);
             String response = eslService.sendCommand(command);
             System.out.println("➡️ Executed transfer: " + command);
             System.out.println("✅ Response: " + response);
