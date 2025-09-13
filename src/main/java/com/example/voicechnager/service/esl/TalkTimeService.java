@@ -77,6 +77,20 @@ public class TalkTimeService {
     }
 
     /**
+     * Mark when the call is answered
+     */
+    public void markAnswered(String uuid) {
+        SessionInfo session = activeSessions.get(uuid);
+        if (session != null) {
+            session.setAnswerTime(new Date());
+            System.out.println("📞 Call answered → UUID=" + uuid + ", answerTime=" + session.getAnswerTime());
+        }
+    }
+
+    /**
+     * Deduct talktime after hangup
+     */
+    /**
      * Deduct talktime after hangup
      */
     public void deductTalkTime(String uuid, Date endTime) {
@@ -84,14 +98,21 @@ public class TalkTimeService {
             SessionInfo session = activeSessions.remove(uuid);
             if (session == null) return;
 
-            Date startTime = session.getStartTime();
-            long diffMillis = endTime.getTime() - startTime.getTime();
-            int duration = (int) Math.ceil(diffMillis / 1000.0);
+            Date answerTime = session.getAnswerTime();
+            if (answerTime == null) {
+                System.out.println("⚠️ No answer time recorded, using startTime instead for UUID=" + uuid);
+                answerTime = session.getStartTime();
+            }
 
-            String startStr = formatDate(startTime);
+            // ✅ duration in whole seconds (no millis, no ceil)
+            long diffSeconds = (endTime.getTime() - answerTime.getTime()) / 1000;
+            int duration = (int) diffSeconds;
+
+            String startStr = formatDate(answerTime);
             String endStr = formatDate(endTime);
 
-            String url = String.format("%s?authKey=%s&callDuration=%d&callEndTime=%s&callStartTime=%s&sessionId=%s",
+            String url = String.format(
+                    "%s?authKey=%s&callDuration=%d&callEndTime=%s&callStartTime=%s&sessionId=%s",
                     DEDUCT_API, AUTH_KEY, duration, endStr, startStr, session.getSessionId());
 
             System.out.println("📡 DeductTalkTime API request: " + url);
@@ -113,7 +134,8 @@ public class TalkTimeService {
 
     private static class SessionInfo {
         private final String sessionId;
-        private final Date startTime;
+        private final Date startTime;   // when session reserved
+        private Date answerTime;        // when call answered
         private final int talkTime;
 
         public SessionInfo(String sessionId, Date startTime, int talkTime) {
@@ -124,6 +146,8 @@ public class TalkTimeService {
 
         public String getSessionId() { return sessionId; }
         public Date getStartTime() { return startTime; }
+        public Date getAnswerTime() { return answerTime; }
+        public void setAnswerTime(Date answerTime) { this.answerTime = answerTime; }
         public int getTalkTime() { return talkTime; }
     }
 }
