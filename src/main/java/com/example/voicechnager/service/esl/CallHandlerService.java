@@ -30,21 +30,6 @@ public class CallHandlerService {
 
         if (bLegUuid == null || userName == null) return;
 
-        String[] parts = userName.split("_");
-        if (parts.length < 3) {
-            System.out.println("⚠️ Invalid userName format: " + userName);
-            return;
-        }
-
-        String aParty = parts[0], bParty = parts[1], email = parts[2];
-
-        boolean allowed = talkTimeService.checkAndReserveTalkTime(bLegUuid, aParty, bParty, email);
-        if (!allowed) {
-            System.out.println("❌ Call rejected due to insufficient talktime (UUID=" + bLegUuid + ")");
-            eslService.sendCommand("uuid_kill " + bLegUuid);
-            return;
-        }
-
         // Apply voicechanger rules
         applyVoiceChanger(bLegUuid, userName);
     }
