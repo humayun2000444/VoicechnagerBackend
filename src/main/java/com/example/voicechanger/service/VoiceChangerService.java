@@ -1,6 +1,6 @@
-package com.example.voicechnager.service;
+package com.example.voicechanger.service;
 
-import com.example.voicechnager.dto.VoiceChangerDto;
+import com.example.voicechanger.dto.VoiceChangerDto;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 

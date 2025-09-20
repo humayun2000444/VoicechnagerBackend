@@ -1,0 +1,542 @@
+/* Modern Voice Changer UI */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #333;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+h1 {
+    text-align: center;
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.subtitle {
+    text-align: center;
+    color: rgba(255,255,255,0.9);
+    font-size: 1.1rem;
+    margin-bottom: 3rem;
+}
+
+/* Section Styling */
+.controls-section,
+.input-section,
+.processing-section,
+.output-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+h3 {
+    color: #555;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+/* Preset Buttons */
+.presets {
+    margin-bottom: 2rem;
+}
+
+.preset-btn {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    margin: 0.5rem 0.5rem 0.5rem 0;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.preset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.preset-btn:active {
+    transform: translateY(0);
+}
+
+.preset-btn[data-preset="reset"] {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+/* Parameter Controls */
+.parameters {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.parameter {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.parameter label {
+    min-width: 200px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.parameter input[type="range"] {
+    flex: 1;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.parameter input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+}
+
+.parameter input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+}
+
+.value {
+    min-width: 50px;
+    text-align: right;
+    font-weight: 600;
+    color: #4f46e5;
+    background: rgba(79, 70, 229, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+}
+
+/* Upload Area */
+.upload-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-bottom: 2rem;
+    background: rgba(249,250,251,0.5);
+}
+
+.upload-area.dragover {
+    border-color: #4f46e5;
+    background: rgba(79, 70, 229, 0.05);
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    width: 48px;
+    height: 48px;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+}
+
+.browse-btn {
+    background: none;
+    border: none;
+    color: #4f46e5;
+    cursor: pointer;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.file-info {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Recording Section */
+.recording-section {
+    background: rgba(249,250,251,0.7);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-top: 2rem;
+}
+
+.recording-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.record-btn,
+.play-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.record-btn {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.record-btn:disabled {
+    background: #9ca3af;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.play-btn {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.play-btn:disabled {
+    background: #9ca3af;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.record-dot {
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+.stop-square {
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+    border-radius: 2px;
+}
+
+.play-triangle {
+    width: 0;
+    height: 0;
+    border-left: 8px solid currentColor;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.recording-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#recording-time {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #dc2626;
+}
+
+.visualizer {
+    flex: 1;
+    height: 40px;
+    background: #e5e7eb;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* Processing Section */
+.process-btn {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.process-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.process-btn:disabled {
+    background: #9ca3af;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.processing-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.progress-container {
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    margin-top: 0.5rem;
+    color: #6b7280;
+}
+
+/* Output Section */
+.audio-player-container {
+    text-align: center;
+}
+
+.output-placeholder {
+    padding: 3rem;
+    text-align: center;
+    color: #6b7280;
+    background: rgba(249,250,251,0.5);
+    border-radius: 12px;
+    border: 2px dashed #d1d5db;
+}
+
+.output-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+    color: #9ca3af;
+}
+
+#output-audio {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+}
+
+.download-section {
+    margin-top: 1rem;
+}
+
+.download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.download-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.download-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Status Messages */
+#status-messages {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+}
+
+.status-message {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-left: 4px solid #10b981;
+    animation: slideIn 0.3s ease;
+}
+
+.status-message.error {
+    border-left-color: #dc2626;
+}
+
+.status-message.warning {
+    border-left-color: #f59e0b;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .parameter {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .parameter label {
+        min-width: auto;
+    }
+
+    .parameter input[type="range"] {
+        width: 100%;
+    }
+
+    .recording-controls {
+        flex-direction: column;
+    }
+
+    .preset-btn {
+        width: 100%;
+        margin: 0.25rem 0;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+
+    .controls-section,
+    .input-section,
+    .processing-section,
+    .output-section {
+        background: rgba(31, 41, 55, 0.95);
+        color: #f9fafb;
+    }
+
+    h2, h3 {
+        color: #f9fafb;
+    }
+
+    .parameter label {
+        color: #d1d5db;
+    }
+
+    .upload-area {
+        background: rgba(17, 24, 39, 0.5);
+        border-color: #4b5563;
+    }
+
+    .recording-section {
+        background: rgba(17, 24, 39, 0.7);
+    }
+
+    .output-placeholder {
+        background: rgba(17, 24, 39, 0.5);
+        border-color: #4b5563;
+        color: #9ca3af;
+    }
+}
+
+/* Animation for processing */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.processing .processing-icon {
+    animation: spin 1s linear infinite;
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}

@@ -1,12 +1,11 @@
 
-package com.example.voicechnager.controller;
+package com.example.voicechanger.controller;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
-import com.example.voicechnager.dto.VoiceChangerDto;
-import com.example.voicechnager.dto.VoiceChangerDto.*;
-import com.example.voicechnager.service.VoiceChangerService;
+import com.example.voicechanger.dto.VoiceChangerDto;
+import com.example.voicechanger.dto.VoiceChangerDto.*;
+import com.example.voicechanger.service.VoiceChangerService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

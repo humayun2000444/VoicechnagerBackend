@@ -1,4 +1,4 @@
-package com.example.voicechnager.service.esl;
+package com.example.voicechanger.service.esl;
 
 import org.springframework.stereotype.Service;
 

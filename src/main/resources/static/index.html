@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Changer Application</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="container">
+    <h1>🎤 Voice Changer</h1>
+    <p class="subtitle">Transform your voice with real-time audio processing</p>
+
+    <!-- Voice Parameter Controls -->
+    <div class="controls-section">
+        <h2>Voice Parameters</h2>
+
+        <!-- Preset Buttons -->
+        <div class="presets">
+            <h3>Quick Presets</h3>
+            <button class="preset-btn" data-preset="male-to-female">Male → Female</button>
+            <button class="preset-btn" data-preset="female-to-male">Female → Male</button>
+            <button class="preset-btn" data-preset="robot">Robot Voice</button>
+            <button class="preset-btn" data-preset="deep">Deep Voice</button>
+            <button class="preset-btn" data-preset="high-pitch">High Pitch</button>
+            <button class="preset-btn" data-preset="reset">Reset</button>
+        </div>
+
+        <!-- Manual Controls -->
+        <div class="parameters">
+            <div class="parameter">
+                <label for="shift">Pitch Shift (semitones):</label>
+                <input type="range" id="shift" min="-20" max="20" step="0.5" value="10">
+                <span class="value" id="shift-value">10.0</span>
+            </div>
+
+            <div class="parameter">
+                <label for="formant">Formant Shift (semitones):</label>
+                <input type="range" id="formant" min="-10" max="10" step="0.1" value="2">
+                <span class="value" id="formant-value">2.0</span>
+            </div>
+
+            <div class="parameter">
+                <label for="base">Formant Base (Hz):</label>
+                <input type="range" id="base" min="50" max="300" step="5" value="100">
+                <span class="value" id="base-value">100</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Input Section -->
+    <div class="input-section">
+        <h2>Audio Input</h2>
+
+        <!-- File Upload -->
+        <div class="upload-area" id="upload-area">
+            <div class="upload-content">
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7,10 12,15 17,10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <p>Drop audio files here or <button type="button" class="browse-btn">browse</button></p>
+                <p class="file-info">Supports WAV, MP3 files (max 50MB)</p>
+            </div>
+            <input type="file" id="file-input" accept="audio/*" hidden>
+        </div>
+
+        <!-- Live Recording -->
+        <div class="recording-section">
+            <h3>🎙️ Live Recording</h3>
+            <div class="recording-controls">
+                <button id="start-recording" class="record-btn">
+                    <span class="record-dot"></span>
+                    Start Recording
+                </button>
+                <button id="stop-recording" class="record-btn" disabled>
+                    <span class="stop-square"></span>
+                    Stop Recording
+                </button>
+                <button id="play-original" class="play-btn" disabled>
+                    <span class="play-triangle"></span>
+                    Play Original
+                </button>
+            </div>
+            <div class="recording-status">
+                <div id="recording-time">00:00</div>
+                <div class="visualizer" id="visualizer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing Section -->
+    <div class="processing-section">
+        <h2>Processing</h2>
+        <button id="process-btn" class="process-btn" disabled>
+            <svg class="processing-icon" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z">
+                    <animateTransform attributeName="transform" type="rotate" dur="1s" from="0 12 12" to="360 12 12" repeatCount="indefinite"/>
+                </path>
+            </svg>
+            Transform Voice
+        </button>
+
+        <div class="progress-container" id="progress-container" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-text" id="progress-text">Processing...</div>
+        </div>
+    </div>
+
+    <!-- Output Section -->
+    <div class="output-section">
+        <h2>Output</h2>
+        <div class="audio-player-container">
+            <audio id="output-audio" controls style="display: none;">
+                Your browser does not support the audio element.
+            </audio>
+
+            <div class="output-placeholder" id="output-placeholder">
+                <svg class="output-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                    <rect x="1" y="5" width="15" height="14"></rect>
+                </svg>
+                <p>Processed audio will appear here</p>
+            </div>
+
+            <div class="download-section" id="download-section" style="display: none;">
+                <button id="download-btn" class="download-btn">
+                    <svg class="download-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7,10 12,15 17,10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download Processed Audio
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Messages -->
+    <div id="status-messages"></div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

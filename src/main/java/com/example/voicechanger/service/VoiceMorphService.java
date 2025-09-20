@@ -1,7 +1,7 @@
-package com.example.voicechnager.service;
+package com.example.voicechanger.service;
 
-import com.example.voicechnager.service.esl.CallTransferService;
-import com.example.voicechnager.service.esl.EslService;
+import com.example.voicechanger.service.esl.CallTransferService;
+import com.example.voicechanger.service.esl.EslService;
 import org.springframework.stereotype.Service;
 
 @Service

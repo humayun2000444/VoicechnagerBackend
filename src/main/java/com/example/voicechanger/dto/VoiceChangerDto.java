@@ -1,4 +1,4 @@
-package com.example.voicechnager.dto;
+package com.example.voicechanger.dto;
 
 public class VoiceChangerDto {
 
