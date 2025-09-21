@@ -1,4 +1,4 @@
-package com.example.voicechnager;
+package com.example.voicechanger;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
