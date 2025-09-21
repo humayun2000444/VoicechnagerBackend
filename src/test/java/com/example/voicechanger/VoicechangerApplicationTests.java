@@ -9,7 +9,7 @@ import org.springframework.test.context.TestPropertySource;
         "voice.changer.max.buffer.size=8192",
         "voice.changer.sample.rate=44100"
 })
-class VoicechnagerApplicationTests {
+class VoicechangerApplicationTests {
 
     @Test
     void contextLoads() {
