@@ -4,12 +4,660 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voice Changer Application</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+/* Modern Voice Changer UI */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+    color: #333;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+h1 {
+    text-align: center;
+    color: white;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    margin-bottom: 5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    padding: 10px 0;
+}
+
+.subtitle {
+    text-align: center;
+    color: rgba(255,255,255,0.9);
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    margin-bottom: 15px;
+    padding: 5px 0;
+}
+
+/* Configuration Display */
+.config-display {
+    text-align: center;
+    margin-bottom: 10px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.config-display small {
+    color: rgba(255,255,255,0.8);
+    font-size: clamp(0.7rem, 2vw, 0.85rem);
+}
+
+.config-display #current-base-url {
+    color: rgba(255,255,255,1);
+    font-weight: 600;
+    background: rgba(255,255,255,0.15);
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 4px;
+}
+
+/* Section Styling */
+.controls-section,
+.input-section,
+.processing-section,
+.output-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 12px;
+    padding: clamp(12px, 3vw, 20px);
+    margin-bottom: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+h2 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    font-weight: 600;
+}
+
+h3 {
+    color: #555;
+    margin-bottom: 10px;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    font-weight: 500;
+}
+
+/* Preset Buttons */
+.presets {
+    margin-bottom: 15px;
+}
+
+.preset-btn {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px);
+    border-radius: 6px;
+    margin: 4px 4px 4px 0;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+.preset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.preset-btn:active {
+    transform: translateY(0);
+}
+
+.preset-btn[data-preset="reset"] {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+/* Parameter Controls */
+.parameters {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.parameter {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.parameter label {
+    font-weight: 500;
+    color: #374151;
+    font-size: clamp(0.8rem, 2.2vw, 0.9rem);
+}
+
+.parameter input[type="range"] {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.parameter input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+}
+
+.parameter input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+}
+
+.value {
+    min-width: 50px;
+    text-align: right;
+    font-weight: 600;
+    color: #4f46e5;
+    background: rgba(79, 70, 229, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+}
+
+/* Upload Area */
+.upload-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
+    padding: clamp(16px, 4vw, 32px);
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+    background: rgba(249,250,251,0.5);
+    width: 100%;
+    min-height: clamp(120px, 20vw, 160px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.upload-area.dragover {
+    border-color: #4f46e5;
+    background: rgba(79, 70, 229, 0.05);
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    width: 48px;
+    height: 48px;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+}
+
+.browse-btn {
+    background: none;
+    border: none;
+    color: #4f46e5;
+    cursor: pointer;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.file-info {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+/* Recording Section */
+.recording-section {
+    background: rgba(249,250,251,0.7);
+    padding: clamp(12px, 3vw, 20px);
+    border-radius: 8px;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.recording-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.record-btn,
+.play-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 0;
+}
+
+.record-btn {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.record-btn:disabled {
+    background: #9ca3af;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.play-btn {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.play-btn:disabled {
+    background: #9ca3af;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.record-dot {
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+.stop-square {
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+    border-radius: 2px;
+}
+
+.play-triangle {
+    width: 0;
+    height: 0;
+    border-left: 8px solid currentColor;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.recording-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#recording-time {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #dc2626;
+}
+
+.visualizer {
+    flex: 1;
+    height: 40px;
+    background: #e5e7eb;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* Processing Section */
+.process-btn {
+    width: 100%;
+    height: clamp(44px, 8vw, 56px);
+    padding: clamp(12px, 3vw, 16px) clamp(20px, 4vw, 32px);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    box-sizing: border-box;
+}
+
+.process-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.process-btn:disabled {
+    background: #9ca3af;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.processing-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.progress-container {
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    margin-top: 0.5rem;
+    color: #6b7280;
+}
+
+/* Output Section */
+.audio-player-container {
+    text-align: center;
+}
+
+.output-placeholder {
+    padding: 3rem;
+    text-align: center;
+    color: #6b7280;
+    background: rgba(249,250,251,0.5);
+    border-radius: 12px;
+    border: 2px dashed #d1d5db;
+}
+
+.output-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 1rem;
+    color: #9ca3af;
+}
+
+#output-audio {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+}
+
+.download-section {
+    margin-top: 1rem;
+}
+
+.download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.download-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.download-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Status Messages */
+#status-messages {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+}
+
+.status-message {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-left: 4px solid #10b981;
+    animation: slideIn 0.3s ease;
+}
+
+.status-message.error {
+    border-left-color: #dc2626;
+}
+
+.status-message.warning {
+    border-left-color: #f59e0b;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 8px;
+    }
+
+    .preset-btn {
+        flex: 1;
+        margin: 2px;
+        min-width: calc(50% - 4px);
+    }
+
+    .presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .recording-controls {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .parameter {
+        background: rgba(249,250,251,0.3);
+        padding: 8px;
+        border-radius: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 6px;
+    }
+
+    .preset-btn {
+        min-width: 100%;
+        margin: 1px 0;
+    }
+
+    .controls-section,
+    .input-section,
+    .processing-section,
+    .output-section {
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+
+    .upload-area {
+        min-height: 100px;
+        padding: 12px;
+    }
+
+    .config-display {
+        padding: 4px 8px;
+        margin-bottom: 8px;
+    }
+}
+
+/* Mobile landscape */
+@media (max-width: 900px) and (orientation: landscape) {
+    .container {
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    h1 {
+        padding: 5px 0;
+        margin-bottom: 5px;
+    }
+
+    .subtitle {
+        margin-bottom: 8px;
+        padding: 2px 0;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+
+    .controls-section,
+    .input-section,
+    .processing-section,
+    .output-section {
+        background: rgba(31, 41, 55, 0.95);
+        color: #f9fafb;
+    }
+
+    h2, h3 {
+        color: #f9fafb;
+    }
+
+    .parameter label {
+        color: #d1d5db;
+    }
+
+    .upload-area {
+        background: rgba(17, 24, 39, 0.5);
+        border-color: #4b5563;
+    }
+
+    .recording-section {
+        background: rgba(17, 24, 39, 0.7);
+    }
+
+    .output-placeholder {
+        background: rgba(17, 24, 39, 0.5);
+        border-color: #4b5563;
+        color: #9ca3af;
+    }
+}
+
+/* Animation for processing */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.processing .processing-icon {
+    animation: spin 1s linear infinite;
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+    </style>
 </head>
 <body>
 <div class="container">
     <h1>🎤 Voice Changer</h1>
     <p class="subtitle">Transform your voice with real-time audio processing</p>
+
+    <!-- Configuration Display -->
+    <div class="config-display">
+        <small>🔗 Server: <span id="current-base-url">http://98.70.40.108/api/</span></small>
+    </div>
 
     <!-- Voice Parameter Controls -->
     <div class="controls-section">
@@ -61,7 +709,7 @@
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
                 <p>Drop audio files here or <button type="button" class="browse-btn">browse</button></p>
-                <p class="file-info">Supports WAV, MP3 files (max 50MB)</p>
+                <p class="file-info">Supports WAV, MP3 files (max 50MB) - Converts to 8kHz WAV standard</p>
             </div>
             <input type="file" id="file-input" accept="audio/*" hidden>
         </div>
@@ -143,6 +791,408 @@
     <div id="status-messages"></div>
 </div>
 
-<script src="/static/js/app.js"></script>
+<script>
+// Voice Changer Application JavaScript
+
+// Configuration
+const CONFIG = {
+    BASE_URL: 'http://98.70.40.108/api' // Change this to your server URL
+};
+
+class VoiceChanger {
+    constructor() {
+        this.audioContext = null;
+        this.mediaRecorder = null;
+        this.recordingChunks = [];
+        this.recordingStream = null;
+        this.isRecording = false;
+        this.recordingStartTime = 0;
+        this.recordingTimer = null;
+        this.currentAudioFile = null;
+        this.originalAudioBlob = null;
+
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.setupAudioContext();
+        this.updateParameterValues();
+        this.updateConfigDisplay();
+    }
+
+    updateConfigDisplay() {
+        const baseUrlElement = document.getElementById('current-base-url');
+        if (baseUrlElement) {
+            baseUrlElement.textContent = CONFIG.BASE_URL;
+        }
+    }
+
+    setupEventListeners() {
+        // Parameter controls
+        document.getElementById('shift').addEventListener('input', this.updateParameterValues.bind(this));
+        document.getElementById('formant').addEventListener('input', this.updateParameterValues.bind(this));
+        document.getElementById('base').addEventListener('input', this.updateParameterValues.bind(this));
+
+        // Preset buttons
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', this.handlePreset.bind(this));
+        });
+
+        // File upload
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.querySelector('.browse-btn');
+
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
+        uploadArea.addEventListener('dragleave', this.handleDragLeave.bind(this));
+        uploadArea.addEventListener('drop', this.handleFileDrop.bind(this));
+
+        // Recording controls
+        document.getElementById('start-recording').addEventListener('click', this.startRecording.bind(this));
+        document.getElementById('stop-recording').addEventListener('click', this.stopRecording.bind(this));
+        document.getElementById('play-original').addEventListener('click', this.playOriginal.bind(this));
+
+        // Processing
+        document.getElementById('process-btn').addEventListener('click', this.processAudio.bind(this));
+
+        // Download
+        document.getElementById('download-btn').addEventListener('click', this.downloadProcessedAudio.bind(this));
+    }
+
+    async setupAudioContext() {
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (error) {
+            this.showMessage('Audio context not supported in this browser', 'error');
+        }
+    }
+
+    updateParameterValues() {
+        const shift = document.getElementById('shift').value;
+        const formant = document.getElementById('formant').value;
+        const base = document.getElementById('base').value;
+
+        document.getElementById('shift-value').textContent = parseFloat(shift).toFixed(1);
+        document.getElementById('formant-value').textContent = parseFloat(formant).toFixed(1);
+        document.getElementById('base-value').textContent = parseInt(base);
+    }
+
+    handlePreset(event) {
+        const preset = event.target.dataset.preset;
+        const presets = {
+            'male-to-female': { shift: 10, formant: 2, base: 100 },
+            'female-to-male': { shift: -15, formant: -4, base: 300 },
+            'robot': { shift: 0, formant: 5, base: 50 },
+            'deep': { shift: -15, formant: -3, base: 250 },
+            'high-pitch': { shift: 15, formant: 3, base: 80 },
+            'reset': { shift: 0, formant: 0, base: 100 }
+        };
+
+        if (presets[preset]) {
+            document.getElementById('shift').value = presets[preset].shift;
+            document.getElementById('formant').value = presets[preset].formant;
+            document.getElementById('base').value = presets[preset].base;
+            this.updateParameterValues();
+        }
+    }
+
+    handleDragOver(event) {
+        event.preventDefault();
+        document.getElementById('upload-area').classList.add('dragover');
+    }
+
+    handleDragLeave(event) {
+        event.preventDefault();
+        document.getElementById('upload-area').classList.remove('dragover');
+    }
+
+    handleFileDrop(event) {
+        event.preventDefault();
+        document.getElementById('upload-area').classList.remove('dragover');
+
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+            this.handleFile(files[0]);
+        }
+    }
+
+    handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            this.handleFile(file);
+        }
+    }
+
+    handleFile(file) {
+        if (!file.type.startsWith('audio/')) {
+            this.showMessage('Please select a valid audio file', 'error');
+            return;
+        }
+
+        if (file.size > 50 * 1024 * 1024) { // 50MB limit
+            this.showMessage('File size exceeds 50MB limit', 'error');
+            return;
+        }
+
+        this.currentAudioFile = file;
+        this.originalAudioBlob = file;
+
+        // Update UI
+        const uploadContent = document.querySelector('.upload-content p');
+        uploadContent.innerHTML = `✅ ${file.name} (${this.formatFileSize(file.size)})`;
+
+        document.getElementById('process-btn').disabled = false;
+        this.showMessage('Audio file loaded successfully - will be converted to 8kHz WAV if needed', 'success');
+    }
+
+    async startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    sampleRate: 8000,
+                    channelCount: 1,
+                    echoCancellation: true,
+                    noiseSuppression: true
+                }
+            });
+
+            this.recordingStream = stream;
+            this.mediaRecorder = new MediaRecorder(stream, {
+                mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+            });
+
+            this.recordingChunks = [];
+
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.recordingChunks.push(event.data);
+                }
+            };
+
+            this.mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(this.recordingChunks, {
+                    type: this.mediaRecorder.mimeType
+                });
+                this.handleRecordingComplete(audioBlob);
+            };
+
+            this.mediaRecorder.start(100); // Collect data every 100ms
+            this.isRecording = true;
+            this.recordingStartTime = Date.now();
+
+            // Update UI
+            document.getElementById('start-recording').disabled = true;
+            document.getElementById('stop-recording').disabled = false;
+
+            // Start timer
+            this.startRecordingTimer();
+
+            this.showMessage('Recording started (will be converted to 8kHz WAV)', 'success');
+
+        } catch (error) {
+            this.showMessage('Could not access microphone: ' + error.message, 'error');
+        }
+    }
+
+    stopRecording() {
+        if (this.mediaRecorder && this.isRecording) {
+            this.mediaRecorder.stop();
+            this.recordingStream.getTracks().forEach(track => track.stop());
+            this.isRecording = false;
+
+            // Update UI
+            document.getElementById('start-recording').disabled = false;
+            document.getElementById('stop-recording').disabled = true;
+
+            // Stop timer
+            this.stopRecordingTimer();
+
+            this.showMessage('Recording stopped', 'success');
+        }
+    }
+
+    startRecordingTimer() {
+        this.recordingTimer = setInterval(() => {
+            const elapsed = Date.now() - this.recordingStartTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('recording-time').textContent =
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }, 1000);
+    }
+
+    stopRecordingTimer() {
+        if (this.recordingTimer) {
+            clearInterval(this.recordingTimer);
+            this.recordingTimer = null;
+        }
+    }
+
+    handleRecordingComplete(audioBlob) {
+        this.originalAudioBlob = audioBlob;
+        this.currentAudioFile = new File([audioBlob], 'recorded_audio.webm', {
+            type: audioBlob.type
+        });
+
+        // Enable buttons
+        document.getElementById('play-original').disabled = false;
+        document.getElementById('process-btn').disabled = false;
+
+        this.showMessage('Recording complete and ready for processing', 'success');
+    }
+
+    playOriginal() {
+        if (this.originalAudioBlob) {
+            const audioUrl = URL.createObjectURL(this.originalAudioBlob);
+            const audio = new Audio(audioUrl);
+            audio.play().catch(error => {
+                this.showMessage('Could not play audio: ' + error.message, 'error');
+            });
+        }
+    }
+
+    async processAudio() {
+        if (!this.currentAudioFile) {
+            this.showMessage('Please select or record an audio file first', 'error');
+            return;
+        }
+
+        const processBtn = document.getElementById('process-btn');
+        const progressContainer = document.getElementById('progress-container');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+
+        try {
+            // Update UI for processing
+            processBtn.disabled = true;
+            processBtn.classList.add('processing');
+            progressContainer.style.display = 'block';
+
+            // Get current parameters
+            const shift = parseFloat(document.getElementById('shift').value);
+            const formant = parseFloat(document.getElementById('formant').value);
+            const base = parseFloat(document.getElementById('base').value);
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('audio', this.currentAudioFile);
+            formData.append('shift', shift.toString());
+            formData.append('formant', formant.toString());
+            formData.append('base', base.toString());
+
+            // Simulate progress (since we can't get real progress from the server easily)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressFill.style.width = progress + '%';
+                progressText.textContent = `Processing... ${Math.round(progress)}%`;
+            }, 200);
+
+            // Make API call
+            const response = await fetch(`${CONFIG.BASE_URL}/api/process`, {
+                method: 'POST',
+                body: formData
+            });
+
+            // Clear progress interval
+            clearInterval(progressInterval);
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            // Complete progress
+            progressFill.style.width = '100%';
+            progressText.textContent = 'Processing complete!';
+
+            // Get processed audio
+            const audioBlob = await response.blob();
+            this.handleProcessedAudio(audioBlob);
+
+        } catch (error) {
+            this.showMessage('Processing failed: ' + error.message, 'error');
+            console.error('Processing error:', error);
+        } finally {
+            // Reset UI
+            processBtn.disabled = false;
+            processBtn.classList.remove('processing');
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                progressFill.style.width = '0%';
+            }, 2000);
+        }
+    }
+
+    handleProcessedAudio(audioBlob) {
+        // Create audio URL
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        // Show audio player
+        const audioElement = document.getElementById('output-audio');
+        const placeholder = document.getElementById('output-placeholder');
+        const downloadSection = document.getElementById('download-section');
+
+        placeholder.style.display = 'none';
+        audioElement.src = audioUrl;
+        audioElement.style.display = 'block';
+        downloadSection.style.display = 'block';
+
+        // Store for download
+        this.processedAudioBlob = audioBlob;
+
+        this.showMessage('Voice transformation complete! Output is 8kHz WAV format.', 'success');
+    }
+
+    downloadProcessedAudio() {
+        if (this.processedAudioBlob) {
+            const url = URL.createObjectURL(this.processedAudioBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'voice_changed_audio_8khz.wav';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            this.showMessage('Download started', 'success');
+        }
+    }
+
+    showMessage(message, type = 'info') {
+        const messagesContainer = document.getElementById('status-messages');
+        const messageElement = document.createElement('div');
+        messageElement.className = `status-message ${type}`;
+        messageElement.textContent = message;
+
+        messagesContainer.appendChild(messageElement);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (messageElement.parentNode) {
+                messageElement.parentNode.removeChild(messageElement);
+            }
+        }, 5000);
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+}
+
+// Initialize the application when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.voiceChanger = new VoiceChanger();
+});
+</script>
 </body>
 </html>
