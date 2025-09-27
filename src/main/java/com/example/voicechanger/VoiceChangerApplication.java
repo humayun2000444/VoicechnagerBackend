@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class VoicechangerApplication {
+public class VoiceChangerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(VoicechangerApplication.class, args);
+        SpringApplication.run(VoiceChangerApplication.class, args);
     }
 
 }
