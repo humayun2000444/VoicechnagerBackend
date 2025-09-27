@@ -96,14 +96,11 @@ public class CallHandlerService {
         String direction = headers.get("Call-Direction");
         String hangupCause = headers.get("Hangup-Cause");
 
-        log.info("❌ Call hangup | Caller={}, UUID={}, Direction={}, Cause={}", caller, hangupUuid, direction, hangupCause);
+        log.info("❌ Call hangup | Caller={}, Direction={}, Cause={}", caller, direction, hangupCause);
 
         try {
             if ("inbound".equalsIgnoreCase(direction)) {
                 talkTimeService.deductTalkTime(hangupUuid, new Date());
-                log.debug("💰 Talk time deducted for inbound call {}", hangupUuid);
-            } else {
-                log.debug("📞 Outbound call {} ended - no talk time deduction", hangupUuid);
             }
         } catch (Exception e) {
             log.error("❌ Error processing hangup for call {}: {}", hangupUuid, e.getMessage(), e);

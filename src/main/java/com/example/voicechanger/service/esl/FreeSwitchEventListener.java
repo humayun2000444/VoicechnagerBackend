@@ -25,7 +25,6 @@ public class FreeSwitchEventListener implements IEslEventListener {
         long eventId = eventCounter.incrementAndGet();
 
         try {
-            log.debug("📨 [Event #{}] Received FreeSWITCH event: {}", eventId, event.getEventName());
             handleEvent(event, eventId);
         } catch (Exception e) {
             log.error("❌ [Event #{}] Error processing event {}: {}", eventId, event.getEventName(), e.getMessage(), e);
@@ -44,41 +43,26 @@ public class FreeSwitchEventListener implements IEslEventListener {
         Map<String, String> headers = event.getEventHeaders();
 
         switch (eventName) {
-            case "CHANNEL_BRIDGE" -> {
-                log.info("🔗 [Event #{}] Processing CHANNEL_BRIDGE event", eventId);
-                callHandlerService.handleBridge(headers);
-            }
-            case "CHANNEL_PARK" -> {
-                log.info("📌 [Event #{}] Processing CHANNEL_PARK event", eventId);
-                callHandlerService.handlePark(headers);
-            }
-            case "CHANNEL_ANSWER" -> {
-                log.info("✅ [Event #{}] Processing CHANNEL_ANSWER event", eventId);
-                callHandlerService.handleAnswer(headers);
-            }
-            case "CHANNEL_HANGUP" -> {
-                log.info("❌ [Event #{}] Processing CHANNEL_HANGUP event", eventId);
-                callHandlerService.handleHangup(headers);
-            }
-            case "CHANNEL_UNPARK" -> {
-                log.info("📤 [Event #{}] Processing CHANNEL_UNPARK event", eventId);
-                callHandlerService.handleUnpark(headers);
-            }
+            case "CHANNEL_BRIDGE" -> callHandlerService.handleBridge(headers);
+            case "CHANNEL_PARK" -> callHandlerService.handlePark(headers);
+            case "CHANNEL_ANSWER" -> callHandlerService.handleAnswer(headers);
+            case "CHANNEL_HANGUP" -> callHandlerService.handleHangup(headers);
+            case "CHANNEL_UNPARK" -> callHandlerService.handleUnpark(headers);
             case "HEARTBEAT" -> {
-                log.debug("💓 [Event #{}] FreeSWITCH heartbeat received - system healthy", eventId);
+                // Silent heartbeat - system healthy
             }
             case "MODULE_LOAD", "MODULE_UNLOAD" -> {
                 String moduleName = headers.getOrDefault("module", "unknown");
-                log.info("🔧 [Event #{}] Module {} event: {}", eventId, eventName, moduleName);
+                log.info("🔧 Module {} event: {}", eventName, moduleName);
             }
             case "SHUTDOWN" -> {
-                log.warn("🛑 [Event #{}] FreeSWITCH shutdown detected!", eventId);
+                log.warn("🛑 FreeSWITCH shutdown detected!");
             }
             case "STARTUP" -> {
-                log.info("🚀 [Event #{}] FreeSWITCH startup detected", eventId);
+                log.info("🚀 FreeSWITCH startup detected");
             }
             default -> {
-                log.trace("📊 [Event #{}] Ignored event: {}", eventId, eventName);
+                // Silent - ignore other events
             }
         }
     }

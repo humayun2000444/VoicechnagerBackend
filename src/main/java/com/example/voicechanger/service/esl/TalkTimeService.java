@@ -32,9 +32,7 @@ public class TalkTimeService {
             String url = String.format("%s?aPartyMsisdn=%s&authKey=%s&bPartyMsisdn=%s&email=%s",
                     GET_API, aParty, AUTH_KEY, bParty, email);
 
-            System.out.println("📡 GET TalkTime API request: " + url);
             Map<String, Object> body = restTemplate.getForObject(url, Map.class);
-            System.out.println("📥 GET TalkTime API response: " + body);
 
             if (body == null) return false;
 
@@ -46,8 +44,8 @@ public class TalkTimeService {
                     Date startTime = new Date();
 
                     activeSessions.put(uuid, new SessionInfo(sessionId, startTime, talkTime));
-                    System.out.printf("✅ TalkTime reserved: %ds for UUID=%s, sessionId=%s%n",
-                            talkTime, uuid, sessionId);
+                    System.out.printf("✅ TalkTime reserved | SessionId=%s, Duration=\u001B[33m%ds\u001B[0m, Status=Success%n",
+                            sessionId, talkTime);
 
                     // Schedule hangup after reserved talktime
                     new Thread(() -> {
@@ -62,7 +60,7 @@ public class TalkTimeService {
 
                     return true;
                 } else {
-                    System.out.println("❌ TalkTime = 0, rejecting call UUID=" + uuid);
+                    System.out.println("❌ TalkTime = \u001B[31m0s\u001B[0m, rejecting call UUID=" + uuid);
                     return false;
                 }
             }
@@ -99,27 +97,31 @@ public class TalkTimeService {
             if (session == null) return;
 
             Date answerTime = session.getAnswerTime();
+            int duration;
+
             if (answerTime == null) {
-                System.out.println("⚠️ No answer time recorded, using startTime instead for UUID=" + uuid);
-                answerTime = session.getStartTime();
+                // Call was never answered - duration should be 0
+                duration = 0;
+                System.out.println("⚠️ Call never answered - Duration=\u001B[31m0s\u001B[0m for UUID=" + uuid);
+            } else {
+                // Calculate duration from answer time to end time with ceiling
+                double diffMillis = endTime.getTime() - answerTime.getTime();
+                double diffSecondsExact = diffMillis / 1000.0;
+                duration = (int) Math.max(0, Math.ceil(diffSecondsExact)); // Ceiling for billing
             }
 
-            // ✅ duration in whole seconds (no millis, no ceil)
-            long diffSeconds = (endTime.getTime() - answerTime.getTime()) / 1000;
-            int duration = (int) diffSeconds;
-
-            String startStr = formatDate(answerTime);
+            // Use answerTime if available, otherwise use session startTime for API call
+            Date callStartTime = (answerTime != null) ? answerTime : session.getStartTime();
+            String startStr = formatDate(callStartTime);
             String endStr = formatDate(endTime);
 
             String url = String.format(
                     "%s?authKey=%s&callDuration=%d&callEndTime=%s&callStartTime=%s&sessionId=%s",
                     DEDUCT_API, AUTH_KEY, duration, endStr, startStr, session.getSessionId());
 
-            System.out.println("📡 DeductTalkTime API request: " + url);
             String response = restTemplate.getForObject(url, String.class);
-            System.out.println("📥 DeductTalkTime API response: " + response);
-            System.out.println("💰 Deducted talk time for sessionId=" + session.getSessionId() +
-                    ", Duration=" + duration + "s");
+            System.out.println("💰 TalkTime deducted | SessionId=" + session.getSessionId() +
+                    ", Duration=\u001B[33m" + duration + "s\u001B[0m, Status=" + (response.contains("success") ? "✅ Success" : "❌ Failed"));
 
         } catch (Exception e) {
             System.err.println("❌ Error in deductTalkTime: " + e.getMessage());
